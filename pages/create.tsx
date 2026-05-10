@@ -2,56 +2,21 @@ import Head from 'next/head'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import { useAuthStore } from '@/lib/store'
-import { ContentType } from '@/lib/types'
+import Layout from '@/components/Layout'
 
-interface FormData {
-  title: string
-  text: string
-  contentType: ContentType | ''
-  category: string
-  sourceBook: string
-  sourcePart: string
-  sourcePage: string
-  topics: string[]
-  publishDate: string
-  notes: string
-}
-
-const CONTENT_TYPES: ContentType[] = [
-  'פתגמים',
-  'אגרות קודש',
-  'חינוך יומי',
-  'עידוד וחיזוק',
-  'נשים',
-  'פנינה יומית',
-]
-
-const CATEGORIES = [
-  'ביטחון בה״א',
-  'דרכי החסידות',
-  'נשים',
-  'עידוד וחיזוק',
-  'כללי',
-]
-
+const CONTENT_TYPES = ['פתגמים', 'אגרות קודש', 'חינוך יומי', 'עידוד וחיזוק', 'נשים', 'פנינה יומית']
+const CATEGORIES = ['ביטחון בה״א', 'דרכי החסידות', 'נשים', 'עידוד וחיזוק', 'כללי']
 const BOOKS = ['תניא', 'אגרות קודש', 'ספר השיחות', 'מענות לשאלות', 'יום־יום']
 const TOPICS = [
-  'אמונה',
-  'ביטחון בה״א',
-  'תשובה',
-  'עבודת ה״ב',
-  'קדושה',
-  'נשים',
-  'משפחה',
-  'חינוך',
-  'דרכי חסידות',
-  'ציון וגאולה',
+  'אמונה', 'ביטחון בה״א', 'תשובה', 'עבודת ה״ב', 'קדושה',
+  'נשים', 'משפחה', 'חינוך', 'דרכי חסידות', 'ציון וגאולה',
+  'תפילה', 'תורה', 'מצוות', 'שמחה', 'ענווה'
 ]
 
 export default function CreateContent() {
   const router = useRouter()
   const user = useAuthStore((state) => state.user)
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState({
     title: '',
     text: '',
     contentType: '',
@@ -59,12 +24,11 @@ export default function CreateContent() {
     sourceBook: '',
     sourcePart: '',
     sourcePage: '',
-    topics: [],
+    topics: [] as string[],
     publishDate: '',
     notes: '',
   })
-  const [boldText, setBoldText] = useState(false)
-  const [selectedText, setSelectedText] = useState<{ start: number; end: number } | null>(null)
+  const [topicSearch, setTopicSearch] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
 
@@ -85,26 +49,27 @@ export default function CreateContent() {
         const selected = formData.text.substring(start, end)
         const before = formData.text.substring(0, start)
         const after = formData.text.substring(end)
-        const newText = before + '**' + selected + '**' + after
-        setFormData((prev) => ({ ...prev, text: newText }))
+        setFormData({ ...formData, text: before + '**' + selected + '**' + after })
       }
     }
   }
+
+  const filteredTopics = TOPICS.filter((t) =>
+    t.toLowerCase().includes(topicSearch.toLowerCase())
+  )
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (!formData.title || !formData.text || !formData.contentType) {
-      setMessage('❌ נא למלא את כל השדות החובה')
+      setMessage('❌ נא למלא את כל שדות החובה')
       return
     }
 
     setLoading(true)
     try {
-      // בפרוייקט אמיתי - פוסט ל-API
-      console.log('Form data:', formData)
-
-      setMessage('✅ התוכן נשמר בהצלחה!')
+      console.log('שומר:', formData)
+      setMessage('✅ הפתגם נשמר בהצלחה!')
 
       setTimeout(() => {
         setFormData({
@@ -123,7 +88,6 @@ export default function CreateContent() {
       }, 2000)
     } catch (error) {
       setMessage('❌ שגיאה בשמירה')
-      console.error(error)
     } finally {
       setLoading(false)
     }
@@ -137,19 +101,8 @@ export default function CreateContent() {
         <title>יצירת תוכן - אור החסידות</title>
       </Head>
 
-      <div className="min-h-screen bg-hebrew-50 dark:bg-gray-950 p-8">
-        <div className="max-w-4xl mx-auto">
-          <button
-            onClick={() => router.back()}
-            className="mb-4 text-hebrew-600 hover:text-hebrew-700 font-bold"
-          >
-            ← חזור
-          </button>
-
-          <h1 className="text-3xl font-bold text-hebrew-700 dark:text-hebrew-100 mb-8">
-            ✍️ יצירת תוכן חדש
-          </h1>
-
+      <Layout title="✍️ יצירת תוכן חדש">
+        <div className="animate-fade-in max-w-4xl">
           <form onSubmit={handleSubmit} className="card space-y-6">
             {/* כותרת */}
             <div>
@@ -171,35 +124,32 @@ export default function CreateContent() {
                 value={formData.text}
                 onChange={(e) => setFormData({ ...formData, text: e.target.value })}
                 onKeyDown={handleTextKeyDown}
-                className="form-input preserve-text font-mono"
-                placeholder="הטקסט של הפתגם..."
+                className="form-input preserve-text"
+                placeholder="הטקסט המלא של הפתגם..."
                 rows={8}
                 required
               />
-              <p className="text-xs text-gray-500 mt-2">💡 Ctrl+B (או Cmd+B) להדגשת טקסט</p>
+              <p className="text-xs text-[#a89070] mt-2">
+                💡 בחר טקסט ולחץ Ctrl+B (או Cmd+B) להדגשה
+              </p>
             </div>
 
-            {/* סוג תוכן וקטגוריה */}
+            {/* סוג וקטגוריה */}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="form-label">סוג תוכן *</label>
                 <select
                   value={formData.contentType}
-                  onChange={(e) =>
-                    setFormData({ ...formData, contentType: e.target.value as ContentType })
-                  }
+                  onChange={(e) => setFormData({ ...formData, contentType: e.target.value })}
                   className="form-input"
                   required
                 >
                   <option value="">בחר סוג</option>
                   {CONTENT_TYPES.map((type) => (
-                    <option key={type} value={type}>
-                      {type}
-                    </option>
+                    <option key={type} value={type}>{type}</option>
                   ))}
                 </select>
               </div>
-
               <div>
                 <label className="form-label">קטגוריה</label>
                 <select
@@ -209,9 +159,7 @@ export default function CreateContent() {
                 >
                   <option value="">בחר קטגוריה</option>
                   {CATEGORIES.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
+                    <option key={cat} value={cat}>{cat}</option>
                   ))}
                 </select>
               </div>
@@ -228,13 +176,10 @@ export default function CreateContent() {
                 >
                   <option value="">בחר ספר</option>
                   {BOOKS.map((book) => (
-                    <option key={book} value={book}>
-                      {book}
-                    </option>
+                    <option key={book} value={book}>{book}</option>
                   ))}
                 </select>
               </div>
-
               <div>
                 <label className="form-label">חלק</label>
                 <input
@@ -245,7 +190,6 @@ export default function CreateContent() {
                   placeholder="חלק"
                 />
               </div>
-
               <div>
                 <label className="form-label">עמוד/שיחה</label>
                 <input
@@ -258,11 +202,18 @@ export default function CreateContent() {
               </div>
             </div>
 
-            {/* נושאים */}
+            {/* נושאים עם חיפוש */}
             <div>
               <label className="form-label">נושאים</label>
-              <div className="flex flex-wrap gap-2">
-                {TOPICS.map((topic) => (
+              <input
+                type="text"
+                value={topicSearch}
+                onChange={(e) => setTopicSearch(e.target.value)}
+                placeholder="🔍 חפש נושא..."
+                className="form-input mb-3"
+              />
+              <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-2 border border-[#d4c5a9] rounded-lg bg-[#fef9f0]">
+                {filteredTopics.map((topic) => (
                   <button
                     key={topic}
                     type="button"
@@ -276,19 +227,20 @@ export default function CreateContent() {
                         setFormData({ ...formData, topics: [...formData.topics, topic] })
                       }
                     }}
-                    className={`px-3 py-1 rounded-full text-sm font-bold transition ${
-                      formData.topics.includes(topic)
-                        ? 'bg-hebrew-600 text-white'
-                        : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300'
-                    }`}
+                    className={formData.topics.includes(topic) ? 'tag tag-active' : 'tag'}
                   >
                     {topic}
                   </button>
                 ))}
               </div>
+              {formData.topics.length > 0 && (
+                <p className="text-xs text-[#6b5535] mt-2">
+                  ✅ נבחרו: {formData.topics.length} נושאים
+                </p>
+              )}
             </div>
 
-            {/* תאריך ופרטים נוספים */}
+            {/* תאריך והערות */}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="form-label">תאריך פרסום</label>
@@ -299,7 +251,6 @@ export default function CreateContent() {
                   className="form-input"
                 />
               </div>
-
               <div>
                 <label className="form-label">הערות</label>
                 <input
@@ -313,25 +264,25 @@ export default function CreateContent() {
             </div>
 
             {/* כפתורים */}
-            <div className="flex gap-4 pt-4">
+            <div className="flex gap-4 pt-4 border-t border-[#d4c5a9]">
               <button type="submit" disabled={loading} className="btn-primary flex-1">
-                {loading ? '⏳ שומר...' : '💾 שמור תוכן'}
+                {loading ? '⏳ שומר...' : '💾 שמור פתגם'}
               </button>
               <button
                 type="button"
-                onClick={() => router.back()}
-                className="btn-secondary flex-1"
+                onClick={() => router.push('/dashboard')}
+                className="btn-secondary"
               >
-                ← חזור
+                ביטול
               </button>
             </div>
 
             {message && (
               <div
-                className={`p-4 rounded text-center font-bold ${
+                className={`p-4 rounded-lg text-center font-bold ${
                   message.includes('✅')
-                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100'
-                    : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100'
+                    ? 'bg-green-100 text-green-800 border border-green-300'
+                    : 'bg-red-100 text-red-800 border border-red-300'
                 }`}
               >
                 {message}
@@ -339,7 +290,7 @@ export default function CreateContent() {
             )}
           </form>
         </div>
-      </div>
+      </Layout>
     </>
   )
 }

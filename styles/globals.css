@@ -14,7 +14,8 @@ html {
 }
 
 body {
-  @apply bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-50;
+  background-color: #f5f0e8;
+  color: #3d2817;
   direction: rtl;
   text-align: right;
 }
@@ -24,96 +25,233 @@ input, textarea, select {
   direction: rtl;
 }
 
-input[type="date"],
-input[type="time"] {
-  text-align: right;
-}
-
-/* Preserve text formatting */
 .preserve-text {
   white-space: pre-line;
   line-height: 1.6;
   word-wrap: break-word;
 }
 
-/* Status badges */
-.status-badge {
-  @apply px-3 py-1 rounded-full text-sm font-bold;
-}
-
-.status-new {
-  @apply bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100;
-}
-
-.status-ready-graphic {
-  @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100;
-}
-
-.status-in-design {
-  @apply bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-100;
-}
-
-.status-ready-publish {
-  @apply bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100;
-}
-
-.status-published {
-  @apply bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100;
-}
-
-.status-rejected {
-  @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100;
-}
-
 /* Cards */
 .card {
-  @apply bg-white dark:bg-gray-800 rounded-lg shadow p-6 border border-gray-200 dark:border-gray-700;
+  background-color: white;
+  border: 1px solid #d4c5a9;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(61, 40, 23, 0.05);
 }
 
 .card-hover {
-  @apply card hover:shadow-lg transition-shadow;
+  background-color: white;
+  border: 1px solid #d4c5a9;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(61, 40, 23, 0.05);
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.card-hover:hover {
+  box-shadow: 0 4px 12px rgba(61, 40, 23, 0.15);
+  border-color: #8b6f47;
+  transform: translateY(-2px);
 }
 
 /* Buttons */
 .btn-primary {
-  @apply bg-hebrew-600 hover:bg-hebrew-700 text-white font-bold py-2 px-4 rounded-lg transition;
+  background-color: #8b6f47;
+  color: white;
+  font-weight: 700;
+  padding: 0.625rem 1.5rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #6b5535;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(139, 111, 71, 0.3);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .btn-secondary {
-  @apply bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-50 font-bold py-2 px-4 rounded-lg transition;
+  background-color: #e8d5b7;
+  color: #3d2817;
+  font-weight: 700;
+  padding: 0.625rem 1.5rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background-color: #d4c5a9;
 }
 
 .btn-sm {
-  @apply py-1 px-3 text-sm;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.875rem;
 }
 
-/* Loading skeleton */
-.skeleton {
-  @apply bg-gray-200 dark:bg-gray-700 rounded animate-pulse;
+.btn-danger {
+  background-color: #b91c1c;
+  color: white;
 }
+
+.btn-danger:hover {
+  background-color: #991b1b;
+}
+
+.btn-success {
+  background-color: #15803d;
+  color: white;
+}
+
+.btn-success:hover {
+  background-color: #166534;
+}
+
+/* Status badges */
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.status-חדש, .status-new { background-color: #dbeafe; color: #1e40af; }
+.status-ממתין-לאישור, .status-pending { background-color: #fef3c7; color: #92400e; }
+.status-מוכן-לגרפיקה { background-color: #fed7aa; color: #c2410c; }
+.status-בעיצוב { background-color: #fde68a; color: #b45309; }
+.status-מוכן-לפרסום { background-color: #d1fae5; color: #065f46; }
+.status-פורסם { background-color: #e9d5ff; color: #6b21a8; }
+.status-נפסל { background-color: #fecaca; color: #991b1b; }
 
 /* Forms */
 .form-input {
-  @apply w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-hebrew-600;
+  width: 100%;
+  padding: 0.625rem 1rem;
+  border: 1px solid #d4c5a9;
+  border-radius: 0.5rem;
+  background-color: white;
+  color: #3d2817;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.form-input:focus {
+  border-color: #8b6f47;
+  box-shadow: 0 0 0 3px rgba(139, 111, 71, 0.1);
 }
 
 .form-label {
-  @apply block font-bold mb-2 text-gray-800 dark:text-gray-100;
+  display: block;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: #3d2817;
+}
+
+/* List rows */
+.list-row {
+  background-color: white;
+  border: 1px solid #d4c5a9;
+  border-radius: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 0.75rem;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.list-row:hover {
+  border-color: #8b6f47;
+  box-shadow: 0 4px 12px rgba(61, 40, 23, 0.1);
+  transform: translateX(-3px);
+}
+
+.list-row.active {
+  background-color: #fef3e0;
+  border-color: #8b6f47;
+  box-shadow: 0 2px 8px rgba(61, 40, 23, 0.1);
 }
 
 /* Animations */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.3s ease-in;
+  animation: fadeIn 0.3s ease-out;
 }
 
-/* Grid layouts */
-.grid-auto {
-  display: grid;
-  gap: 1.5rem;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f5f0e8;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #8b6f47;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #6b5535;
+}
+
+/* Tags */
+.tag {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background-color: #e8d5b7;
+  color: #3d2817;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin: 0.125rem;
+}
+
+.tag-active {
+  background-color: #8b6f47;
+  color: white;
+}
+
+/* Stats Cards */
+.stat-card {
+  background: linear-gradient(135deg, #fff 0%, #fef9f0 100%);
+  border: 1px solid #d4c5a9;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.stat-card:hover {
+  border-color: #8b6f47;
+  box-shadow: 0 8px 16px rgba(61, 40, 23, 0.1);
+}
+
+.stat-number {
+  font-size: 3rem;
+  font-weight: 800;
+  color: #8b6f47;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #6b5535;
+  font-weight: 700;
+  margin-top: 0.5rem;
 }

@@ -1,15 +1,21 @@
 import Head from 'next/head'
-import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import { useAuthStore } from '@/lib/store'
-import { Category } from '@/lib/types'
+import Layout from '@/components/Layout'
+
+interface CategoryStats {
+  name: string
+  pending: number
+  readyGraphic: number
+  readyPublish: number
+  published: number
+}
 
 export default function Dashboard() {
   const router = useRouter()
   const user = useAuthStore((state) => state.user)
-  const [categories, setCategories] = useState<Category[]>([])
-  const [loading, setLoading] = useState(true)
+  const [categories, setCategories] = useState<CategoryStats[]>([])
 
   useEffect(() => {
     if (!user) {
@@ -17,34 +23,22 @@ export default function Dashboard() {
       return
     }
 
-    // Mock data - בפרוייקט אמיתי יהיה שליפה מ-Airtable
     setCategories([
-      {
-        name: 'ביטחון בה״א',
-        count: { pending: 3, readyGraphic: 5, readyPublish: 12, published: 45 },
-      },
-      {
-        name: 'דרכי החסידות',
-        count: { pending: 2, readyGraphic: 4, readyPublish: 8, published: 32 },
-      },
-      {
-        name: 'נשים',
-        count: { pending: 1, readyGraphic: 3, readyPublish: 6, published: 28 },
-      },
-      {
-        name: 'עידוד וחיזוק',
-        count: { pending: 4, readyGraphic: 7, readyPublish: 15, published: 52 },
-      },
+      { name: 'ביטחון בה״א', pending: 3, readyGraphic: 5, readyPublish: 12, published: 45 },
+      { name: 'דרכי החסידות', pending: 2, readyGraphic: 4, readyPublish: 8, published: 32 },
+      { name: 'נשים', pending: 1, readyGraphic: 3, readyPublish: 6, published: 28 },
+      { name: 'עידוד וחיזוק', pending: 4, readyGraphic: 7, readyPublish: 15, published: 52 },
     ])
-    setLoading(false)
   }, [user, router])
 
   if (!user) return null
 
-  const totalPending = categories.reduce((acc, cat) => acc + cat.count.pending, 0)
-  const totalReadyGraphic = categories.reduce((acc, cat) => acc + cat.count.readyGraphic, 0)
-  const totalReadyPublish = categories.reduce((acc, cat) => acc + cat.count.readyPublish, 0)
-  const totalPublished = categories.reduce((acc, cat) => acc + cat.count.published, 0)
+  const total = {
+    pending: categories.reduce((s, c) => s + c.pending, 0),
+    readyGraphic: categories.reduce((s, c) => s + c.readyGraphic, 0),
+    readyPublish: categories.reduce((s, c) => s + c.readyPublish, 0),
+    published: categories.reduce((s, c) => s + c.published, 0),
+  }
 
   return (
     <>
@@ -52,118 +46,150 @@ export default function Dashboard() {
         <title>דשבורד - אור החסידות</title>
       </Head>
 
-      <div className="min-h-screen bg-hebrew-50 dark:bg-gray-950 p-8">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
-            <div>
-              <h1 className="text-4xl font-bold text-hebrew-700 dark:text-hebrew-100 mb-2">
-                📊 דשבורד
-              </h1>
-              <p className="text-gray-600 dark:text-gray-400">
-                ברוכים הבאים, {user.name}!
-              </p>
-            </div>
-            <button
-              onClick={() => {
-                useAuthStore.setState({ user: null })
-                localStorage.removeItem('user')
-                router.push('/')
-              }}
-              className="btn-secondary"
-            >
-              התנתק
-            </button>
+      <Layout title="📊 דשבורד">
+        <div className="animate-fade-in space-y-6">
+          {/* Welcome */}
+          <div className="card">
+            <h2 className="text-xl font-bold text-[#3d2817] mb-2">
+              ברוכים הבאים, {user.name}! 👋
+            </h2>
+            <p className="text-[#6b5535]">
+              הינה תמונת מצב כללית של המערכת
+            </p>
           </div>
 
-          {/* סטטיסטיקות כוללות */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-            <div className="card text-center">
-              <div className="text-4xl font-bold text-yellow-600 mb-2">{totalPending}</div>
-              <p className="font-bold text-sm">ממתין לאישור</p>
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="stat-card">
+              <div className="text-4xl mb-2">⏳</div>
+              <div className="stat-number" style={{ color: '#92400e' }}>{total.pending}</div>
+              <div className="stat-label">ממתין לאישור</div>
             </div>
-            <div className="card text-center">
-              <div className="text-4xl font-bold text-orange-600 mb-2">{totalReadyGraphic}</div>
-              <p className="font-bold text-sm">מוכן לגרפיקה</p>
+            <div className="stat-card">
+              <div className="text-4xl mb-2">🎨</div>
+              <div className="stat-number" style={{ color: '#c2410c' }}>{total.readyGraphic}</div>
+              <div className="stat-label">מוכן לגרפיקה</div>
             </div>
-            <div className="card text-center">
-              <div className="text-4xl font-bold text-green-600 mb-2">{totalReadyPublish}</div>
-              <p className="font-bold text-sm">מוכן לפרסום</p>
+            <div className="stat-card">
+              <div className="text-4xl mb-2">✅</div>
+              <div className="stat-number" style={{ color: '#065f46' }}>{total.readyPublish}</div>
+              <div className="stat-label">מוכן לפרסום</div>
             </div>
-            <div className="card text-center">
-              <div className="text-4xl font-bold text-purple-600 mb-2">{totalPublished}</div>
-              <p className="font-bold text-sm">פורסם</p>
+            <div className="stat-card">
+              <div className="text-4xl mb-2">🌟</div>
+              <div className="stat-number" style={{ color: '#6b21a8' }}>{total.published}</div>
+              <div className="stat-label">פורסמו</div>
             </div>
           </div>
 
-          {/* סטטיסטיקות לפי קטגוריה */}
-          <div className="card mb-8">
-            <h2 className="text-2xl font-bold mb-6">תמונת מצב לפי קטגוריה</h2>
-            <div className="space-y-4">
-              {categories.map((cat) => (
-                <div key={cat.name} className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                  <h3 className="font-bold mb-3">{cat.name}</h3>
-                  <div className="grid grid-cols-4 gap-4 text-sm">
-                    <div>
-                      <p className="text-gray-500">ממתין לאישור</p>
-                      <p className="text-2xl font-bold text-yellow-600">{cat.count.pending}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">מוכן לגרפיקה</p>
-                      <p className="text-2xl font-bold text-orange-600">{cat.count.readyGraphic}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">מוכן לפרסום</p>
-                      <p className="text-2xl font-bold text-green-600">{cat.count.readyPublish}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">פורסם</p>
-                      <p className="text-2xl font-bold text-purple-600">{cat.count.published}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
+          {/* Categories Table */}
+          <div className="card">
+            <h2 className="text-xl font-bold text-[#3d2817] mb-6">
+              📚 תמונת מצב לפי קטגוריה
+            </h2>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b-2 border-[#d4c5a9]">
+                    <th className="text-right py-3 px-4 font-bold text-[#3d2817]">קטגוריה</th>
+                    <th className="text-center py-3 px-4 font-bold text-[#92400e]">ממתין</th>
+                    <th className="text-center py-3 px-4 font-bold text-[#c2410c]">לגרפיקה</th>
+                    <th className="text-center py-3 px-4 font-bold text-[#065f46]">לפרסום</th>
+                    <th className="text-center py-3 px-4 font-bold text-[#6b21a8]">פורסם</th>
+                    <th className="text-center py-3 px-4 font-bold text-[#3d2817]">סה"כ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {categories.map((cat, idx) => (
+                    <tr
+                      key={cat.name}
+                      className={`border-b border-[#d4c5a9] hover:bg-[#fef9f0] transition ${
+                        idx % 2 === 0 ? 'bg-white' : 'bg-[#fef9f0]'
+                      }`}
+                    >
+                      <td className="py-4 px-4 font-bold text-[#3d2817]">{cat.name}</td>
+                      <td className="text-center py-4 px-4">
+                        <span className="status-badge status-pending">{cat.pending}</span>
+                      </td>
+                      <td className="text-center py-4 px-4">
+                        <span className="status-badge status-ready-graphic">{cat.readyGraphic}</span>
+                      </td>
+                      <td className="text-center py-4 px-4">
+                        <span className="status-badge status-ready-publish">{cat.readyPublish}</span>
+                      </td>
+                      <td className="text-center py-4 px-4">
+                        <span className="status-badge status-published">{cat.published}</span>
+                      </td>
+                      <td className="text-center py-4 px-4 font-bold text-[#3d2817]">
+                        {cat.pending + cat.readyGraphic + cat.readyPublish + cat.published}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
 
-          {/* קישורים ביצירים */}
-          {user.role === 'editor' && (
-            <div className="grid grid-cols-2 gap-4">
-              <Link href="/create" className="card-hover flex flex-col items-center justify-center p-8">
-                <div className="text-5xl mb-4">✍️</div>
-                <div className="font-bold text-lg">יצירת תוכן</div>
-              </Link>
-              <Link href="/search" className="card-hover flex flex-col items-center justify-center p-8">
-                <div className="text-5xl mb-4">🔍</div>
-                <div className="font-bold text-lg">חיפוש וערוך</div>
-              </Link>
+          {/* Quick Actions */}
+          <div className="card">
+            <h2 className="text-xl font-bold text-[#3d2817] mb-6">⚡ פעולות מהירות</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {user.role === 'editor' && (
+                <>
+                  <button
+                    onClick={() => router.push('/create')}
+                    className="card-hover text-center"
+                  >
+                    <div className="text-4xl mb-2">✍️</div>
+                    <div className="font-bold text-[#3d2817]">פתגם חדש</div>
+                  </button>
+                  <button
+                    onClick={() => router.push('/search')}
+                    className="card-hover text-center"
+                  >
+                    <div className="text-4xl mb-2">🔍</div>
+                    <div className="font-bold text-[#3d2817]">חיפוש</div>
+                  </button>
+                </>
+              )}
+              {user.role === 'admin' && (
+                <>
+                  <button
+                    onClick={() => router.push('/approval')}
+                    className="card-hover text-center"
+                  >
+                    <div className="text-4xl mb-2">✅</div>
+                    <div className="font-bold text-[#3d2817]">אישור</div>
+                  </button>
+                  <button
+                    onClick={() => router.push('/search')}
+                    className="card-hover text-center"
+                  >
+                    <div className="text-4xl mb-2">🔍</div>
+                    <div className="font-bold text-[#3d2817]">חיפוש</div>
+                  </button>
+                  <button
+                    onClick={() => router.push('/admin')}
+                    className="card-hover text-center"
+                  >
+                    <div className="text-4xl mb-2">⚙️</div>
+                    <div className="font-bold text-[#3d2817]">ניהול</div>
+                  </button>
+                </>
+              )}
+              {user.role === 'designer' && (
+                <button
+                  onClick={() => router.push('/design')}
+                  className="card-hover text-center"
+                >
+                  <div className="text-4xl mb-2">🎨</div>
+                  <div className="font-bold text-[#3d2817]">עיצוב</div>
+                </button>
+              )}
             </div>
-          )}
-
-          {user.role === 'admin' && (
-            <div className="grid grid-cols-3 gap-4">
-              <Link href="/approval" className="card-hover flex flex-col items-center justify-center p-8">
-                <div className="text-5xl mb-4">✅</div>
-                <div className="font-bold text-lg">אישור תוכן</div>
-              </Link>
-              <Link href="/search" className="card-hover flex flex-col items-center justify-center p-8">
-                <div className="text-5xl mb-4">🔍</div>
-                <div className="font-bold text-lg">חיפוש</div>
-              </Link>
-              <Link href="/admin" className="card-hover flex flex-col items-center justify-center p-8">
-                <div className="text-5xl mb-4">⚙️</div>
-                <div className="font-bold text-lg">ניהול</div>
-              </Link>
-            </div>
-          )}
-
-          {user.role === 'designer' && (
-            <Link href="/design" className="card-hover flex flex-col items-center justify-center p-8">
-              <div className="text-5xl mb-4">🎨</div>
-              <div className="font-bold text-lg">עיצובים מוכנים</div>
-            </Link>
-          )}
+          </div>
         </div>
-      </div>
+      </Layout>
     </>
   )
 }
