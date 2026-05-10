@@ -1,99 +1,164 @@
 import Head from 'next/head'
-import { useState } from 'react'
-
-const STATUSES = ['חדש', 'מוכן לגרפיקה', 'בעיצוב', 'מוכן לפרסום', 'פורסם']
-const CONTENT_TYPES = ['פתגמים', 'אגרות קודש', 'חינוך יומי', 'עידוד וחיזוק']
-const CATEGORIES = ['ביטחון בה״א', 'דרכי החסידות', 'נשים', 'כללי']
-const SOURCES = ['תניא', 'אגרות קודש', 'ספר השיחות', 'פי התורה']
-const EDITORS = ['עורך 1', 'עורך 2', 'עורך 3']
+import { useRouter } from 'next/router'
+import { useEffect, useState } from 'react'
+import { useAuthStore } from '@/lib/store'
+import { ContentType } from '@/lib/types'
 
 interface FormData {
   title: string
   text: string
-  contentType: string
+  contentType: ContentType | ''
   category: string
-  source: string
   sourceBook: string
+  sourcePart: string
   sourcePage: string
   topics: string[]
   publishDate: string
-  editorName: string
-  sourceImage?: File
-  status: string
+  notes: string
 }
 
-export default function CreateContent({ user }: any) {
+const CONTENT_TYPES: ContentType[] = [
+  'פתגמים',
+  'אגרות קודש',
+  'חינוך יומי',
+  'עידוד וחיזוק',
+  'נשים',
+  'פנינה יומית',
+]
+
+const CATEGORIES = [
+  'ביטחון בה״א',
+  'דרכי החסידות',
+  'נשים',
+  'עידוד וחיזוק',
+  'כללי',
+]
+
+const BOOKS = ['תניא', 'אגרות קודש', 'ספר השיחות', 'מענות לשאלות', 'יום־יום']
+const TOPICS = [
+  'אמונה',
+  'ביטחון בה״א',
+  'תשובה',
+  'עבודת ה״ב',
+  'קדושה',
+  'נשים',
+  'משפחה',
+  'חינוך',
+  'דרכי חסידות',
+  'ציון וגאולה',
+]
+
+export default function CreateContent() {
+  const router = useRouter()
+  const user = useAuthStore((state) => state.user)
   const [formData, setFormData] = useState<FormData>({
     title: '',
     text: '',
     contentType: '',
     category: '',
-    source: '',
     sourceBook: '',
+    sourcePart: '',
     sourcePage: '',
     topics: [],
     publishDate: '',
-    editorName: user?.email || '',
-    status: 'חדש',
+    notes: '',
   })
-
+  const [boldText, setBoldText] = useState(false)
+  const [selectedText, setSelectedText] = useState<{ start: number; end: number } | null>(null)
+  const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
 
-  const handleInputChange = (field: keyof FormData, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }))
+  useEffect(() => {
+    if (!user || user.role !== 'editor') {
+      router.push('/')
+    }
+  }, [user, router])
+
+  const handleTextKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+      e.preventDefault()
+      const textarea = e.currentTarget
+      const start = textarea.selectionStart
+      const end = textarea.selectionEnd
+
+      if (start !== end) {
+        const selected = formData.text.substring(start, end)
+        const before = formData.text.substring(0, start)
+        const after = formData.text.substring(end)
+        const newText = before + '**' + selected + '**' + after
+        setFormData((prev) => ({ ...prev, text: newText }))
+      }
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
-    // כאן תתחברות ל-Airtable API
-    console.log('שמירת תוכן:', formData)
-    setMessage('✅ התוכן נשמר בהצלחה!')
-    
-    setTimeout(() => {
-      setFormData({
-        title: '',
-        text: '',
-        contentType: '',
-        category: '',
-        source: '',
-        sourceBook: '',
-        sourcePage: '',
-        topics: [],
-        publishDate: '',
-        editorName: user?.email || '',
-        status: 'חדש',
-      })
-      setMessage('')
-    }, 2000)
+
+    if (!formData.title || !formData.text || !formData.contentType) {
+      setMessage('❌ נא למלא את כל השדות החובה')
+      return
+    }
+
+    setLoading(true)
+    try {
+      // בפרוייקט אמיתי - פוסט ל-API
+      console.log('Form data:', formData)
+
+      setMessage('✅ התוכן נשמר בהצלחה!')
+
+      setTimeout(() => {
+        setFormData({
+          title: '',
+          text: '',
+          contentType: '',
+          category: '',
+          sourceBook: '',
+          sourcePart: '',
+          sourcePage: '',
+          topics: [],
+          publishDate: '',
+          notes: '',
+        })
+        setMessage('')
+      }, 2000)
+    } catch (error) {
+      setMessage('❌ שגיאה בשמירה')
+      console.error(error)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  if (!user) {
-    return <div className="p-8 text-center">⛔ אתה לא מחובר</div>
-  }
+  if (!user) return null
 
   return (
     <>
       <Head>
         <title>יצירת תוכן - אור החסידות</title>
       </Head>
-      
+
       <div className="min-h-screen bg-hebrew-50 dark:bg-gray-950 p-8">
         <div className="max-w-4xl mx-auto">
-          <h1 className="hebrew-title mb-8">✍️ יצירת תוכן חדש</h1>
+          <button
+            onClick={() => router.back()}
+            className="mb-4 text-hebrew-600 hover:text-hebrew-700 font-bold"
+          >
+            ← חזור
+          </button>
+
+          <h1 className="text-3xl font-bold text-hebrew-700 dark:text-hebrew-100 mb-8">
+            ✍️ יצירת תוכן חדש
+          </h1>
 
           <form onSubmit={handleSubmit} className="card space-y-6">
             {/* כותרת */}
             <div>
-              <label className="block font-bold mb-2">כותרת</label>
+              <label className="form-label">כותרת *</label>
               <input
                 type="text"
                 value={formData.title}
-                onChange={(e) => handleInputChange('title', e.target.value)}
-                className="w-full px-4 py-2 rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-700"
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                className="form-input"
                 placeholder="כותרת הפתגם"
                 required
               />
@@ -101,133 +166,160 @@ export default function CreateContent({ user }: any) {
 
             {/* טקסט */}
             <div>
-              <label className="block font-bold mb-2">טקסט מלא</label>
+              <label className="form-label">טקסט מלא *</label>
               <textarea
                 value={formData.text}
-                onChange={(e) => handleInputChange('text', e.target.value)}
-                className="w-full px-4 py-2 rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-700 preserve-text"
-                placeholder="הטקסט של הפתגם"
-                rows={6}
+                onChange={(e) => setFormData({ ...formData, text: e.target.value })}
+                onKeyDown={handleTextKeyDown}
+                className="form-input preserve-text font-mono"
+                placeholder="הטקסט של הפתגם..."
+                rows={8}
                 required
               />
-              <p className="text-sm text-gray-500 mt-2">💡 Ctrl+B להדגשת טקסט</p>
+              <p className="text-xs text-gray-500 mt-2">💡 Ctrl+B (או Cmd+B) להדגשת טקסט</p>
             </div>
 
-            {/* סוג תוכן */}
+            {/* סוג תוכן וקטגוריה */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block font-bold mb-2">סוג תוכן</label>
+                <label className="form-label">סוג תוכן *</label>
                 <select
                   value={formData.contentType}
-                  onChange={(e) => handleInputChange('contentType', e.target.value)}
-                  className="w-full px-4 py-2 rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-700"
+                  onChange={(e) =>
+                    setFormData({ ...formData, contentType: e.target.value as ContentType })
+                  }
+                  className="form-input"
+                  required
                 >
                   <option value="">בחר סוג</option>
-                  {CONTENT_TYPES.map(type => (
-                    <option key={type} value={type}>{type}</option>
+                  {CONTENT_TYPES.map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="block font-bold mb-2">קטגוריה</label>
+                <label className="form-label">קטגוריה</label>
                 <select
                   value={formData.category}
-                  onChange={(e) => handleInputChange('category', e.target.value)}
-                  className="w-full px-4 py-2 rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-700"
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  className="form-input"
                 >
                   <option value="">בחר קטגוריה</option>
-                  {CATEGORIES.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
+                  {CATEGORIES.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
                   ))}
                 </select>
               </div>
             </div>
 
-            {/* מקור */}
+            {/* מקורות */}
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <label className="block font-bold mb-2">מקור - ספר</label>
+                <label className="form-label">ספר</label>
                 <select
                   value={formData.sourceBook}
-                  onChange={(e) => handleInputChange('sourceBook', e.target.value)}
-                  className="w-full px-4 py-2 rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-700"
+                  onChange={(e) => setFormData({ ...formData, sourceBook: e.target.value })}
+                  className="form-input"
                 >
                   <option value="">בחר ספר</option>
-                  {SOURCES.map(src => (
-                    <option key={src} value={src}>{src}</option>
+                  {BOOKS.map((book) => (
+                    <option key={book} value={book}>
+                      {book}
+                    </option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="block font-bold mb-2">חלק</label>
+                <label className="form-label">חלק</label>
                 <input
                   type="text"
-                  value={formData.source}
-                  onChange={(e) => handleInputChange('source', e.target.value)}
-                  className="w-full px-4 py-2 rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-700"
+                  value={formData.sourcePart}
+                  onChange={(e) => setFormData({ ...formData, sourcePart: e.target.value })}
+                  className="form-input"
                   placeholder="חלק"
                 />
               </div>
 
               <div>
-                <label className="block font-bold mb-2">עמוד/שיחה</label>
+                <label className="form-label">עמוד/שיחה</label>
                 <input
                   type="text"
                   value={formData.sourcePage}
-                  onChange={(e) => handleInputChange('sourcePage', e.target.value)}
-                  className="w-full px-4 py-2 rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-700"
+                  onChange={(e) => setFormData({ ...formData, sourcePage: e.target.value })}
+                  className="form-input"
                   placeholder="עמוד"
                 />
               </div>
             </div>
 
-            {/* תאריך פרסום */}
+            {/* נושאים */}
+            <div>
+              <label className="form-label">נושאים</label>
+              <div className="flex flex-wrap gap-2">
+                {TOPICS.map((topic) => (
+                  <button
+                    key={topic}
+                    type="button"
+                    onClick={() => {
+                      if (formData.topics.includes(topic)) {
+                        setFormData({
+                          ...formData,
+                          topics: formData.topics.filter((t) => t !== topic),
+                        })
+                      } else {
+                        setFormData({ ...formData, topics: [...formData.topics, topic] })
+                      }
+                    }}
+                    className={`px-3 py-1 rounded-full text-sm font-bold transition ${
+                      formData.topics.includes(topic)
+                        ? 'bg-hebrew-600 text-white'
+                        : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300'
+                    }`}
+                  >
+                    {topic}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* תאריך ופרטים נוספים */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block font-bold mb-2">תאריך פרסום</label>
+                <label className="form-label">תאריך פרסום</label>
                 <input
                   type="date"
                   value={formData.publishDate}
-                  onChange={(e) => handleInputChange('publishDate', e.target.value)}
-                  className="w-full px-4 py-2 rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-700"
+                  onChange={(e) => setFormData({ ...formData, publishDate: e.target.value })}
+                  className="form-input"
                 />
               </div>
 
               <div>
-                <label className="block font-bold mb-2">עורך</label>
+                <label className="form-label">הערות</label>
                 <input
                   type="text"
-                  value={formData.editorName}
-                  disabled
-                  className="w-full px-4 py-2 rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-700 opacity-50"
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  className="form-input"
+                  placeholder="הערות נוספות"
                 />
               </div>
             </div>
 
-            {/* תמונת מקור */}
-            <div>
-              <label className="block font-bold mb-2">📷 תמונת מקור</label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => handleInputChange('sourceImage', e.target.files?.[0])}
-                className="w-full px-4 py-2 rounded border border-gray-300 dark:border-gray-600"
-              />
-            </div>
-
-            {/* כפתור שליחה */}
-            <div className="flex gap-4">
-              <button
-                type="submit"
-                className="btn-primary flex-1"
-              >
-                💾 שמור תוכן
+            {/* כפתורים */}
+            <div className="flex gap-4 pt-4">
+              <button type="submit" disabled={loading} className="btn-primary flex-1">
+                {loading ? '⏳ שומר...' : '💾 שמור תוכן'}
               </button>
               <button
                 type="button"
-                onClick={() => window.history.back()}
+                onClick={() => router.back()}
                 className="btn-secondary flex-1"
               >
                 ← חזור
@@ -235,7 +327,13 @@ export default function CreateContent({ user }: any) {
             </div>
 
             {message && (
-              <div className="p-4 bg-green-100 text-green-800 rounded text-center font-bold">
+              <div
+                className={`p-4 rounded text-center font-bold ${
+                  message.includes('✅')
+                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100'
+                    : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100'
+                }`}
+              >
                 {message}
               </div>
             )}

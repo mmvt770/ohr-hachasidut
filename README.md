@@ -1,42 +1,39 @@
 # 🌟 אור החסידות - מערכת ניהול תוכן
 
-> מערכת מתקדמת לניהול תוכן יומי - פתגמים, אגרות קודש, חינוך וחיזוק
+> מערכת מקצועית וחזקה לניהול תוכן יומי עבור "אור החסידות"
 
-## 📋 תיאור הפרוייקט
+## 📋 מה בתוך?
 
-מערכת ניהול תוכן המיועדת לארגון "אור החסידות" המאפשרת:
+### 👥 תפקידים וממשקים
 
-- ✍️ **יצירת תוכן** - עורכים מעלים פתגמים וחומרים יומיים
-- 🔍 **חיפוש חכם** - חיפוש ממתקדם לפי קטגוריה, תאריך ומקור
-- 🎨 **ניהול עיצוב** - גרפיקאים מעלים עיצובים סופיים
-- ⚙️ **ניהול מערכת** - דשבורד ניהול עם סטטיסטיקות
-- 🔐 **הרשאות משתמשים** - עורך, גרפיקאי, מנהל
+| תפקיד | ממשקים | תכונות |
+|------|--------|--------|
+| **עורך** | יצירה, חיפוש | העלאת פתגמים, חיפוש וערוך, שכפול |
+| **מנהל** | אישור, ניהול, חיפוש | אישור/דחיית תוכן, ניהול ספרים, סטטיסטיקות |
+| **גרפיקאי** | עיצוב | העלאת עיצובים סופיים |
 
-## 🛠️ טכנולוגיה
+### 📱 דפים ותכונות
 
-- **Next.js 14** - React framework
-- **TypeScript** - Type safety
-- **Tailwind CSS** - Styling
-- **Airtable** - בסיס נתונים (אפשר להתחבר)
-- **RTL/Hebrew** - עברית מלאה
-
-## 📱 עמודים
-
-| עמוד | תיאור | משתמשים |
-|------|------|---------|
-| `/` | כניסה | כל המשתמשים |
-| `/create` | יצירת תוכן | עורכים |
-| `/search` | חיפוש ועריכה | עורכים, מנהלים |
-| `/design` | העלאת עיצובים | גרפיקאים |
-| `/admin` | ניהול מערכת | מנהלים |
+- **🏠 דף בית (/)** - כניסה בעברית מלאה
+- **📊 דשבורד** - סטטיסטיקות וסקירה כוללת
+- **✍️ יצירת תוכן** - טופס יצירה עם שמירת מבנה טקסט
+- **🔍 חיפוש** - חיפוש וסינון מתקדם לפי קטגוריה, תאריך, סוג
+- **✅ אישור** - ממשק אישור תוכן למנהל
+- **🎨 עיצוב** - העלאת עיצובים סופיים
+- **⚙️ ניהול** - ניהול ספרים וסטטיסטיקות
 
 ## 🚀 התחלה מהירה
+
+### דרישות
+
+- Node.js 18+
+- npm / yarn
 
 ### התקנה
 
 ```bash
-git clone https://github.com/mmvt770/ohr-hachasidut.git
-cd ohr-hachasidut
+git clone https://github.com/mmvt770/ohr-hachasidut-pro.git
+cd ohr-hachasidut-pro
 npm install
 ```
 
@@ -55,57 +52,92 @@ npm run build
 npm start
 ```
 
-## 👥 תפקידים ודוגמאות כניסה
+## 🔧 הגדרות Airtable
 
-**עורך:**
-- email: `editor@example.com`
-- password: `any`
+1. צור Base חדש ב-Airtable
+2. צור טבלה "Content" עם השדות הבאים:
+   - `Title` (Text)
+   - `Text` (Long Text)
+   - `ContentType` (Select)
+   - `Category` (Select)
+   - `SourceBook` (Select)
+   - `SourcePart` (Text)
+   - `SourcePage` (Text)
+   - `Topics` (Multiple Select)
+   - `PublishDate` (Date)
+   - `EditorName` (Text)
+   - `SourceImage` (Attachment)
+   - `FinalImage` (Attachment)
+   - `Status` (Select)
+   - `Notes` (Long Text)
 
-**גרפיקאי:**
-- email: `designer@example.com`
-- password: `any`
+3. הוסף את `.env.local`:
+```bash
+NEXT_PUBLIC_AIRTABLE_BASE_ID=your_base_id
+NEXT_PUBLIC_AIRTABLE_API_KEY=your_api_key
+```
 
-**מנהל:**
-- email: `admin@example.com`
-- password: `any`
+## 🎨 עיצוב וטכנולוגיה
 
-## 📊 מבנה נתונים (Airtable)
+- **Next.js 14** - React Framework
+- **TypeScript** - Type Safety
+- **Tailwind CSS** - Styling
+- **Zustand** - State Management
+- **React Hook Form** - Form Management
+- **Airtable API** - Database
 
-### טבלה ראשית - תוכן
+## 📊 מבנה הפרויקט
 
-| שדה | סוג | תיאור |
-|-----|------|------|
-| מספר סידורי | Number | זיהוי ייחודי |
-| כותרת | Text | כותרת הפתגם |
-| טקסט מלא | Long text | התוכן של הפתגם |
-| סוג תוכן | Select | פתגמים, אגרות, חינוך וכו' |
-| קטגוריה | Select | ביטחון, דרכים וכו' |
-| מקור - ספר | Select | תניא, אגרות קודש וכו' |
-| מקור - חלק | Text | חלק ספציפי |
-| מקור - עמוד | Text | עמוד/שיחה/מכתב |
-| תאריך פרסום | Date | מתי לפרסם |
-| עורך | Text | מי כתב |
-| סטטוס | Select | חדש, מוכן לגרפיקה, וכו' |
-| תמונת מקור | Attachment | תמונה מהמקור |
-| עיצוב סופי | Attachment | תמונה סופית לפרסום |
-| הערות | Text | הערות נוספות |
+```
+ohr-hachasidut-pro/
+├── pages/
+│   ├── index.tsx          (כניסה)
+│   ├── dashboard.tsx      (דשבורד)
+│   ├── create.tsx         (יצירת תוכן)
+│   ├── search.tsx         (חיפוש)
+│   ├── approval.tsx       (אישור)
+│   ├── design.tsx         (עיצוב)
+│   ├── admin.tsx          (ניהול)
+│   ├── _app.tsx
+│   └── _document.tsx
+├── lib/
+│   ├── airtable.ts        (Airtable API)
+│   ├── types.ts           (TypeScript Types)
+│   ├── store.ts           (Zustand Store)
+│   └── utils.ts           (Utilities)
+├── styles/
+│   └── globals.css        (Global Styles)
+└── public/
+    └── favicon.ico
+```
+
+## 🔐 הרשאות והאבטחה
+
+בפרויקט הנוכחי - הרשאות זמניות.
+
+בפרוייקט אמיתי - יכללו:
+- NextAuth.js או Firebase Auth
+- JWT tokens
+- Role-based access control
+- Secure session management
 
 ## ✨ תכונות עתידיות
 
-- [ ] חיפוש בעזרת AI
-- [ ] זיהוי כפילויות
-- [ ] חיבור מלא ל-Airtable API
-- [ ] ייצוא לרשתות חברתיות
-- [ ] סטטוסים אוטומטיים
-- [ ] ממשק אישור מנהל
-- [ ] דשבורד מתקדם
+- [ ] אימות משתמשים אמיתי (Google OAuth / NextAuth)
+- [ ] חיפוש בעזרת AI (זיהוי כפילויות)
+- [ ] ייצוא ל-PDF וWord
+- [ ] לוח שנה לתצוגת פרסום
+- [ ] אוטומציות עם n8n/Make
+- [ ] תמיכה בקובצים (Google Drive)
 
-## 📞 יצירת קשר
+## 📞 תמיכה וברקנים
 
-**לקוח:** אור החסידות
-**פרויקט:** ניהול תוכן
-**מטבח:** Claude AI
+כל שגיאה או הערה - בואו נתקן ביחד!
+
+## 📄 רישיון
+
+עבור אור החסידות בלבד
 
 ---
 
-**Made with ❤️ by Claude**
+**Built with ❤️ by Claude**

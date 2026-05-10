@@ -1,21 +1,23 @@
 import '../styles/globals.css'
 import type { AppProps } from 'next/app'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
+import { useAuthStore } from '@/lib/store'
 
 export default function App({ Component, pageProps }: AppProps) {
-  const [mounted, setMounted] = useState(false)
-  const [user, setUser] = useState<any>(null)
+  const setUser = useAuthStore((state) => state.setUser)
 
   useEffect(() => {
-    setMounted(true)
-    // בדוק אם יש user מחובר
+    // טען משתמש משמור
     const savedUser = localStorage.getItem('user')
     if (savedUser) {
-      setUser(JSON.parse(savedUser))
+      try {
+        setUser(JSON.parse(savedUser))
+      } catch (error) {
+        console.error('Failed to parse saved user:', error)
+        localStorage.removeItem('user')
+      }
     }
-  }, [])
+  }, [setUser])
 
-  if (!mounted) return null
-
-  return <Component {...pageProps} user={user} setUser={setUser} />
+  return <Component {...pageProps} />
 }

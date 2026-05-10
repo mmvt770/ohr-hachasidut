@@ -16,8 +16,13 @@ module.exports = {
           700: '#4a2611',
         },
       },
+      fontFamily: {
+        hebrew: ['Assistant', 'sans-serif'],
+      },
     },
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/forms'),
+  ],
   darkMode: 'class',
 }
