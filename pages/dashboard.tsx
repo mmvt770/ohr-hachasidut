@@ -1,8 +1,7 @@
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
-import { useAuthStore } from '@/lib/store'
-import Layout from '@/components/Layout'
+import Layout from '../components/Layout'
 
 interface CategoryStats {
   name: string
@@ -14,24 +13,27 @@ interface CategoryStats {
 
 export default function Dashboard() {
   const router = useRouter()
-  const user = useAuthStore((state) => state.user)
-  const [categories, setCategories] = useState<CategoryStats[]>([])
+  const [user, setUser] = useState<any>(null)
+  const [mounted, setMounted] = useState(false)
+
+  const categories: CategoryStats[] = [
+    { name: 'ביטחון בה״א', pending: 3, readyGraphic: 5, readyPublish: 12, published: 45 },
+    { name: 'דרכי החסידות', pending: 2, readyGraphic: 4, readyPublish: 8, published: 32 },
+    { name: 'נשים', pending: 1, readyGraphic: 3, readyPublish: 6, published: 28 },
+    { name: 'עידוד וחיזוק', pending: 4, readyGraphic: 7, readyPublish: 15, published: 52 },
+  ]
 
   useEffect(() => {
-    if (!user) {
+    setMounted(true)
+    const savedUser = localStorage.getItem('user')
+    if (savedUser) {
+      setUser(JSON.parse(savedUser))
+    } else {
       router.push('/')
-      return
     }
+  }, [router])
 
-    setCategories([
-      { name: 'ביטחון בה״א', pending: 3, readyGraphic: 5, readyPublish: 12, published: 45 },
-      { name: 'דרכי החסידות', pending: 2, readyGraphic: 4, readyPublish: 8, published: 32 },
-      { name: 'נשים', pending: 1, readyGraphic: 3, readyPublish: 6, published: 28 },
-      { name: 'עידוד וחיזוק', pending: 4, readyGraphic: 7, readyPublish: 15, published: 52 },
-    ])
-  }, [user, router])
-
-  if (!user) return null
+  if (!mounted || !user) return null
 
   const total = {
     pending: categories.reduce((s, c) => s + c.pending, 0),
@@ -50,10 +52,10 @@ export default function Dashboard() {
         <div className="animate-fade-in space-y-6">
           {/* Welcome */}
           <div className="card">
-            <h2 className="text-xl font-bold text-[#3d2817] mb-2">
+            <h2 className="text-xl font-bold mb-2" style={{ color: '#3d2817' }}>
               ברוכים הבאים, {user.name}! 👋
             </h2>
-            <p className="text-[#6b5535]">
+            <p style={{ color: '#6b5535' }}>
               הינה תמונת מצב כללית של המערכת
             </p>
           </div>
@@ -84,30 +86,31 @@ export default function Dashboard() {
 
           {/* Categories Table */}
           <div className="card">
-            <h2 className="text-xl font-bold text-[#3d2817] mb-6">
+            <h2 className="text-xl font-bold mb-6" style={{ color: '#3d2817' }}>
               📚 תמונת מצב לפי קטגוריה
             </h2>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b-2 border-[#d4c5a9]">
-                    <th className="text-right py-3 px-4 font-bold text-[#3d2817]">קטגוריה</th>
-                    <th className="text-center py-3 px-4 font-bold text-[#92400e]">ממתין</th>
-                    <th className="text-center py-3 px-4 font-bold text-[#c2410c]">לגרפיקה</th>
-                    <th className="text-center py-3 px-4 font-bold text-[#065f46]">לפרסום</th>
-                    <th className="text-center py-3 px-4 font-bold text-[#6b21a8]">פורסם</th>
-                    <th className="text-center py-3 px-4 font-bold text-[#3d2817]">סה"כ</th>
+                  <tr style={{ borderBottom: '2px solid #d4c5a9' }}>
+                    <th className="text-right py-3 px-4 font-bold" style={{ color: '#3d2817' }}>קטגוריה</th>
+                    <th className="text-center py-3 px-4 font-bold" style={{ color: '#92400e' }}>ממתין</th>
+                    <th className="text-center py-3 px-4 font-bold" style={{ color: '#c2410c' }}>לגרפיקה</th>
+                    <th className="text-center py-3 px-4 font-bold" style={{ color: '#065f46' }}>לפרסום</th>
+                    <th className="text-center py-3 px-4 font-bold" style={{ color: '#6b21a8' }}>פורסם</th>
+                    <th className="text-center py-3 px-4 font-bold" style={{ color: '#3d2817' }}>סה"כ</th>
                   </tr>
                 </thead>
                 <tbody>
                   {categories.map((cat, idx) => (
                     <tr
                       key={cat.name}
-                      className={`border-b border-[#d4c5a9] hover:bg-[#fef9f0] transition ${
-                        idx % 2 === 0 ? 'bg-white' : 'bg-[#fef9f0]'
-                      }`}
+                      style={{
+                        borderBottom: '1px solid #d4c5a9',
+                        backgroundColor: idx % 2 === 0 ? 'white' : '#fef9f0',
+                      }}
                     >
-                      <td className="py-4 px-4 font-bold text-[#3d2817]">{cat.name}</td>
+                      <td className="py-4 px-4 font-bold" style={{ color: '#3d2817' }}>{cat.name}</td>
                       <td className="text-center py-4 px-4">
                         <span className="status-badge status-pending">{cat.pending}</span>
                       </td>
@@ -120,7 +123,7 @@ export default function Dashboard() {
                       <td className="text-center py-4 px-4">
                         <span className="status-badge status-published">{cat.published}</span>
                       </td>
-                      <td className="text-center py-4 px-4 font-bold text-[#3d2817]">
+                      <td className="text-center py-4 px-4 font-bold" style={{ color: '#3d2817' }}>
                         {cat.pending + cat.readyGraphic + cat.readyPublish + cat.published}
                       </td>
                     </tr>
@@ -132,58 +135,42 @@ export default function Dashboard() {
 
           {/* Quick Actions */}
           <div className="card">
-            <h2 className="text-xl font-bold text-[#3d2817] mb-6">⚡ פעולות מהירות</h2>
+            <h2 className="text-xl font-bold mb-6" style={{ color: '#3d2817' }}>
+              ⚡ פעולות מהירות
+            </h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {user.role === 'editor' && (
                 <>
-                  <button
-                    onClick={() => router.push('/create')}
-                    className="card-hover text-center"
-                  >
+                  <button onClick={() => router.push('/create')} className="card-hover text-center">
                     <div className="text-4xl mb-2">✍️</div>
-                    <div className="font-bold text-[#3d2817]">פתגם חדש</div>
+                    <div className="font-bold" style={{ color: '#3d2817' }}>פתגם חדש</div>
                   </button>
-                  <button
-                    onClick={() => router.push('/search')}
-                    className="card-hover text-center"
-                  >
+                  <button onClick={() => router.push('/search')} className="card-hover text-center">
                     <div className="text-4xl mb-2">🔍</div>
-                    <div className="font-bold text-[#3d2817]">חיפוש</div>
+                    <div className="font-bold" style={{ color: '#3d2817' }}>חיפוש</div>
                   </button>
                 </>
               )}
               {user.role === 'admin' && (
                 <>
-                  <button
-                    onClick={() => router.push('/approval')}
-                    className="card-hover text-center"
-                  >
+                  <button onClick={() => router.push('/approval')} className="card-hover text-center">
                     <div className="text-4xl mb-2">✅</div>
-                    <div className="font-bold text-[#3d2817]">אישור</div>
+                    <div className="font-bold" style={{ color: '#3d2817' }}>אישור</div>
                   </button>
-                  <button
-                    onClick={() => router.push('/search')}
-                    className="card-hover text-center"
-                  >
+                  <button onClick={() => router.push('/search')} className="card-hover text-center">
                     <div className="text-4xl mb-2">🔍</div>
-                    <div className="font-bold text-[#3d2817]">חיפוש</div>
+                    <div className="font-bold" style={{ color: '#3d2817' }}>חיפוש</div>
                   </button>
-                  <button
-                    onClick={() => router.push('/admin')}
-                    className="card-hover text-center"
-                  >
+                  <button onClick={() => router.push('/admin')} className="card-hover text-center">
                     <div className="text-4xl mb-2">⚙️</div>
-                    <div className="font-bold text-[#3d2817]">ניהול</div>
+                    <div className="font-bold" style={{ color: '#3d2817' }}>ניהול</div>
                   </button>
                 </>
               )}
               {user.role === 'designer' && (
-                <button
-                  onClick={() => router.push('/design')}
-                  className="card-hover text-center"
-                >
+                <button onClick={() => router.push('/design')} className="card-hover text-center">
                   <div className="text-4xl mb-2">🎨</div>
-                  <div className="font-bold text-[#3d2817]">עיצוב</div>
+                  <div className="font-bold" style={{ color: '#3d2817' }}>עיצוב</div>
                 </button>
               )}
             </div>

@@ -1,8 +1,7 @@
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
-import { useAuthStore } from '@/lib/store'
-import Layout from '@/components/Layout'
+import Layout from '../components/Layout'
 
 interface PendingItem {
   id: string
@@ -25,7 +24,7 @@ const MOCK_PENDING: PendingItem[] = [
   {
     id: '2',
     title: 'עצה על חינוך ילדים',
-    text: 'כל ילד צריך להיחנך בדרכו.\n\nצריך להכיר את אופיו של כל ילד בנפרד.',
+    text: 'כל ילד צריך להיחנך בדרכו.',
     contentType: 'חינוך יומי',
     editorName: 'יוסף לוי',
     createdTime: '2026-05-09',
@@ -34,49 +33,48 @@ const MOCK_PENDING: PendingItem[] = [
 
 export default function Approval() {
   const router = useRouter()
-  const user = useAuthStore((state) => state.user)
+  const [user, setUser] = useState<any>(null)
+  const [mounted, setMounted] = useState(false)
   const [items, setItems] = useState<PendingItem[]>(MOCK_PENDING)
-  const [selected, setSelected] = useState<PendingItem | null>(items[0] || null)
+  const [selected, setSelected] = useState<PendingItem | null>(MOCK_PENDING[0])
   const [feedback, setFeedback] = useState('')
-  const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
 
   useEffect(() => {
-    if (!user || user.role !== 'admin') {
+    setMounted(true)
+    const savedUser = localStorage.getItem('user')
+    if (savedUser) {
+      const u = JSON.parse(savedUser)
+      if (u.role === 'admin') {
+        setUser(u)
+      } else {
+        router.push('/dashboard')
+      }
+    } else {
       router.push('/')
     }
-  }, [user, router])
+  }, [router])
 
-  const handleApprove = async (id: string) => {
-    setLoading(true)
-    try {
-      setItems(items.filter((i) => i.id !== id))
-      setSelected(null)
-      setMessage('✅ הפתגם אושר בהצלחה!')
-      setTimeout(() => setMessage(''), 2000)
-    } finally {
-      setLoading(false)
-    }
+  const handleApprove = (id: string) => {
+    setItems(items.filter((i) => i.id !== id))
+    setSelected(null)
+    setMessage('✅ הפתגם אושר בהצלחה!')
+    setTimeout(() => setMessage(''), 2000)
   }
 
-  const handleReject = async (id: string) => {
+  const handleReject = (id: string) => {
     if (!feedback.trim()) {
-      setMessage('❌ נא להוסיף משוב לפני דחיה')
+      setMessage('❌ נא להוסיף משוב')
       return
     }
-    setLoading(true)
-    try {
-      setItems(items.filter((i) => i.id !== id))
-      setSelected(null)
-      setFeedback('')
-      setMessage('✅ הפתגם נדחה')
-      setTimeout(() => setMessage(''), 2000)
-    } finally {
-      setLoading(false)
-    }
+    setItems(items.filter((i) => i.id !== id))
+    setSelected(null)
+    setFeedback('')
+    setMessage('✅ הפתגם נדחה')
+    setTimeout(() => setMessage(''), 2000)
   }
 
-  if (!user) return null
+  if (!mounted || !user) return null
 
   return (
     <>
@@ -86,17 +84,15 @@ export default function Approval() {
 
       <Layout title={`✅ אישור תוכן (${items.length})`}>
         <div className="animate-fade-in grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left - List */}
           <div className="lg:col-span-1">
             <div className="card mb-4">
-              <h2 className="font-bold text-[#3d2817]">ממתינים לאישור</h2>
+              <h2 className="font-bold" style={{ color: '#3d2817' }}>ממתינים לאישור</h2>
             </div>
-
             <div>
               {items.length === 0 ? (
                 <div className="card text-center py-8">
                   <div className="text-4xl mb-3">✅</div>
-                  <p className="text-[#6b5535]">אין פריטים ממתינים</p>
+                  <p style={{ color: '#6b5535' }}>אין פריטים ממתינים</p>
                 </div>
               ) : (
                 items.map((item) => (
@@ -105,11 +101,9 @@ export default function Approval() {
                     onClick={() => setSelected(item)}
                     className={`list-row ${selected?.id === item.id ? 'active' : ''}`}
                   >
-                    <h3 className="font-bold text-[#3d2817]">{item.title}</h3>
-                    <div className="flex gap-2 flex-wrap mt-2">
-                      <span className="tag">{item.contentType}</span>
-                    </div>
-                    <p className="text-xs text-[#a89070] mt-2">
+                    <h3 className="font-bold" style={{ color: '#3d2817' }}>{item.title}</h3>
+                    <span className="tag mt-2 inline-block">{item.contentType}</span>
+                    <p className="text-xs mt-2" style={{ color: '#a89070' }}>
                       ✍️ {item.editorName} • 📅 {item.createdTime}
                     </p>
                   </div>
@@ -118,70 +112,55 @@ export default function Approval() {
             </div>
           </div>
 
-          {/* Right - Detail */}
           {selected && (
             <div className="lg:col-span-2">
               <div className="card space-y-6">
                 <div>
-                  <h2 className="text-2xl font-bold text-[#3d2817] mb-3">
+                  <h2 className="text-2xl font-bold mb-3" style={{ color: '#3d2817' }}>
                     {selected.title}
                   </h2>
                   <div className="flex gap-2 flex-wrap">
                     <span className="tag tag-active">{selected.contentType}</span>
                     <span className="tag">✍️ {selected.editorName}</span>
-                    <span className="tag">📅 {selected.createdTime}</span>
                   </div>
                 </div>
-
                 <div>
-                  <h3 className="font-bold text-[#3d2817] mb-3">📜 תוכן מלא:</h3>
-                  <div className="bg-[#fef9f0] p-6 rounded-lg border border-[#d4c5a9]">
-                    <p className="preserve-text whitespace-pre-line text-[#3d2817]">
+                  <h3 className="font-bold mb-3" style={{ color: '#3d2817' }}>📜 תוכן:</h3>
+                  <div
+                    className="p-6 rounded-lg"
+                    style={{ backgroundColor: '#fef9f0', border: '1px solid #d4c5a9' }}
+                  >
+                    <p className="preserve-text whitespace-pre-line" style={{ color: '#3d2817' }}>
                       {selected.text}
                     </p>
                   </div>
                 </div>
-
                 <div>
                   <label className="form-label">📝 משוב/הערות</label>
                   <textarea
                     value={feedback}
                     onChange={(e) => setFeedback(e.target.value)}
                     className="form-input"
-                    placeholder="הוסף משוב או הערות לעורך..."
+                    placeholder="הוסף משוב..."
                     rows={4}
                   />
                 </div>
-
-                <div className="flex gap-3 pt-4 border-t border-[#d4c5a9]">
-                  <button
-                    onClick={() => handleApprove(selected.id)}
-                    disabled={loading}
-                    className="btn-primary btn-success flex-1"
-                  >
-                    {loading ? '⏳' : '✅'} אישור
+                <div className="flex gap-3 pt-4" style={{ borderTop: '1px solid #d4c5a9' }}>
+                  <button onClick={() => handleApprove(selected.id)} className="btn-primary btn-success flex-1">
+                    ✅ אישור
                   </button>
-                  <button
-                    onClick={() => handleReject(selected.id)}
-                    disabled={loading}
-                    className="btn-primary btn-danger flex-1"
-                  >
-                    {loading ? '⏳' : '❌'} דחיה
-                  </button>
-                  <button
-                    onClick={() => alert('עריכה של: ' + selected.title)}
-                    className="btn-secondary"
-                  >
-                    ✏️ ערוך
+                  <button onClick={() => handleReject(selected.id)} className="btn-primary btn-danger flex-1">
+                    ❌ דחיה
                   </button>
                 </div>
-
                 {message && (
-                  <div className={`p-4 rounded-lg text-center font-bold ${
-                    message.includes('✅')
-                      ? 'bg-green-100 text-green-800 border border-green-300'
-                      : 'bg-red-100 text-red-800 border border-red-300'
-                  }`}>
+                  <div
+                    className="p-4 rounded-lg text-center font-bold"
+                    style={{
+                      backgroundColor: message.includes('✅') ? '#dcfce7' : '#fee2e2',
+                      color: message.includes('✅') ? '#166534' : '#991b1b',
+                    }}
+                  >
                     {message}
                   </div>
                 )}

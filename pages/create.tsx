@@ -1,8 +1,7 @@
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
-import { useAuthStore } from '@/lib/store'
-import Layout from '@/components/Layout'
+import Layout from '../components/Layout'
 
 const CONTENT_TYPES = ['פתגמים', 'אגרות קודש', 'חינוך יומי', 'עידוד וחיזוק', 'נשים', 'פנינה יומית']
 const CATEGORIES = ['ביטחון בה״א', 'דרכי החסידות', 'נשים', 'עידוד וחיזוק', 'כללי']
@@ -15,7 +14,8 @@ const TOPICS = [
 
 export default function CreateContent() {
   const router = useRouter()
-  const user = useAuthStore((state) => state.user)
+  const [user, setUser] = useState<any>(null)
+  const [mounted, setMounted] = useState(false)
   const [formData, setFormData] = useState({
     title: '',
     text: '',
@@ -33,10 +33,19 @@ export default function CreateContent() {
   const [message, setMessage] = useState('')
 
   useEffect(() => {
-    if (!user || user.role !== 'editor') {
+    setMounted(true)
+    const savedUser = localStorage.getItem('user')
+    if (savedUser) {
+      const u = JSON.parse(savedUser)
+      if (u.role === 'editor') {
+        setUser(u)
+      } else {
+        router.push('/dashboard')
+      }
+    } else {
       router.push('/')
     }
-  }, [user, router])
+  }, [router])
 
   const handleTextKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
@@ -93,7 +102,7 @@ export default function CreateContent() {
     }
   }
 
-  if (!user) return null
+  if (!mounted || !user) return null
 
   return (
     <>
@@ -104,7 +113,6 @@ export default function CreateContent() {
       <Layout title="✍️ יצירת תוכן חדש">
         <div className="animate-fade-in max-w-4xl">
           <form onSubmit={handleSubmit} className="card space-y-6">
-            {/* כותרת */}
             <div>
               <label className="form-label">כותרת *</label>
               <input
@@ -117,7 +125,6 @@ export default function CreateContent() {
               />
             </div>
 
-            {/* טקסט */}
             <div>
               <label className="form-label">טקסט מלא *</label>
               <textarea
@@ -129,12 +136,11 @@ export default function CreateContent() {
                 rows={8}
                 required
               />
-              <p className="text-xs text-[#a89070] mt-2">
-                💡 בחר טקסט ולחץ Ctrl+B (או Cmd+B) להדגשה
+              <p className="text-xs mt-2" style={{ color: '#a89070' }}>
+                💡 בחר טקסט ולחץ Ctrl+B להדגשה
               </p>
             </div>
 
-            {/* סוג וקטגוריה */}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="form-label">סוג תוכן *</label>
@@ -165,7 +171,6 @@ export default function CreateContent() {
               </div>
             </div>
 
-            {/* מקורות */}
             <div className="grid grid-cols-3 gap-4">
               <div>
                 <label className="form-label">ספר</label>
@@ -187,7 +192,6 @@ export default function CreateContent() {
                   value={formData.sourcePart}
                   onChange={(e) => setFormData({ ...formData, sourcePart: e.target.value })}
                   className="form-input"
-                  placeholder="חלק"
                 />
               </div>
               <div>
@@ -197,12 +201,10 @@ export default function CreateContent() {
                   value={formData.sourcePage}
                   onChange={(e) => setFormData({ ...formData, sourcePage: e.target.value })}
                   className="form-input"
-                  placeholder="עמוד"
                 />
               </div>
             </div>
 
-            {/* נושאים עם חיפוש */}
             <div>
               <label className="form-label">נושאים</label>
               <input
@@ -212,7 +214,10 @@ export default function CreateContent() {
                 placeholder="🔍 חפש נושא..."
                 className="form-input mb-3"
               />
-              <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-2 border border-[#d4c5a9] rounded-lg bg-[#fef9f0]">
+              <div
+                className="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-2 rounded-lg"
+                style={{ border: '1px solid #d4c5a9', backgroundColor: '#fef9f0' }}
+              >
                 {filteredTopics.map((topic) => (
                   <button
                     key={topic}
@@ -233,14 +238,8 @@ export default function CreateContent() {
                   </button>
                 ))}
               </div>
-              {formData.topics.length > 0 && (
-                <p className="text-xs text-[#6b5535] mt-2">
-                  ✅ נבחרו: {formData.topics.length} נושאים
-                </p>
-              )}
             </div>
 
-            {/* תאריך והערות */}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="form-label">תאריך פרסום</label>
@@ -258,13 +257,11 @@ export default function CreateContent() {
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                   className="form-input"
-                  placeholder="הערות נוספות"
                 />
               </div>
             </div>
 
-            {/* כפתורים */}
-            <div className="flex gap-4 pt-4 border-t border-[#d4c5a9]">
+            <div className="flex gap-4 pt-4" style={{ borderTop: '1px solid #d4c5a9' }}>
               <button type="submit" disabled={loading} className="btn-primary flex-1">
                 {loading ? '⏳ שומר...' : '💾 שמור פתגם'}
               </button>
@@ -279,11 +276,11 @@ export default function CreateContent() {
 
             {message && (
               <div
-                className={`p-4 rounded-lg text-center font-bold ${
-                  message.includes('✅')
-                    ? 'bg-green-100 text-green-800 border border-green-300'
-                    : 'bg-red-100 text-red-800 border border-red-300'
-                }`}
+                className="p-4 rounded-lg text-center font-bold"
+                style={{
+                  backgroundColor: message.includes('✅') ? '#dcfce7' : '#fee2e2',
+                  color: message.includes('✅') ? '#166534' : '#991b1b',
+                }}
               >
                 {message}
               </div>

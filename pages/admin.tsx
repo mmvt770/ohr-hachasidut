@@ -1,8 +1,7 @@
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
-import { useAuthStore } from '@/lib/store'
-import Layout from '@/components/Layout'
+import Layout from '../components/Layout'
 
 interface Book {
   id: string
@@ -11,7 +10,8 @@ interface Book {
 
 export default function Admin() {
   const router = useRouter()
-  const user = useAuthStore((state) => state.user)
+  const [user, setUser] = useState<any>(null)
+  const [mounted, setMounted] = useState(false)
   const [books, setBooks] = useState<Book[]>([
     { id: '1', name: 'תניא' },
     { id: '2', name: 'אגרות קודש' },
@@ -24,16 +24,24 @@ export default function Admin() {
   const [message, setMessage] = useState('')
 
   useEffect(() => {
-    if (!user || user.role !== 'admin') {
+    setMounted(true)
+    const savedUser = localStorage.getItem('user')
+    if (savedUser) {
+      const u = JSON.parse(savedUser)
+      if (u.role === 'admin') {
+        setUser(u)
+      } else {
+        router.push('/dashboard')
+      }
+    } else {
       router.push('/')
     }
-  }, [user, router])
+  }, [router])
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault()
     if (!newBook.trim()) return
-
-    const newId = (Math.max(...books.map((b) => parseInt(b.id) || 0), 0) + 1).toString()
+    const newId = (books.length + 1).toString()
     setBooks([...books, { id: newId, name: newBook }])
     setNewBook('')
     setMessage('✅ ספר נוסף!')
@@ -52,12 +60,10 @@ export default function Admin() {
   const handleDelete = (id: string) => {
     if (confirm('האם אתה בטוח?')) {
       setBooks(books.filter((b) => b.id !== id))
-      setMessage('✅ נמחק!')
-      setTimeout(() => setMessage(''), 2000)
     }
   }
 
-  if (!user) return null
+  if (!mounted || !user) return null
 
   return (
     <>
@@ -67,9 +73,8 @@ export default function Admin() {
 
       <Layout title="⚙️ ניהול ספרים">
         <div className="animate-fade-in space-y-6 max-w-4xl">
-          {/* Add Book */}
           <div className="card">
-            <h2 className="text-xl font-bold text-[#3d2817] mb-4">
+            <h2 className="text-xl font-bold mb-4" style={{ color: '#3d2817' }}>
               ➕ הוספת ספר חדש
             </h2>
             <form onSubmit={handleAdd} className="flex gap-3">
@@ -86,78 +91,74 @@ export default function Admin() {
             </form>
           </div>
 
-          {/* Books List */}
           <div className="card">
-            <h2 className="text-xl font-bold text-[#3d2817] mb-4">
+            <h2 className="text-xl font-bold mb-4" style={{ color: '#3d2817' }}>
               📚 ספרים קיימים ({books.length})
             </h2>
-
             <div>
-              {books.length === 0 ? (
-                <div className="text-center py-8 text-[#6b5535]">
-                  אין ספרים במערכת
-                </div>
-              ) : (
-                books.map((book) => (
-                  <div
-                    key={book.id}
-                    className="flex justify-between items-center p-4 mb-2 bg-[#fef9f0] rounded-lg border border-[#d4c5a9]"
-                  >
-                    {editing === book.id ? (
-                      <div className="flex gap-2 flex-1">
-                        <input
-                          type="text"
-                          value={editName}
-                          onChange={(e) => setEditName(e.target.value)}
-                          className="form-input flex-1"
-                          autoFocus
-                        />
+              {books.map((book) => (
+                <div
+                  key={book.id}
+                  className="flex justify-between items-center p-4 mb-2 rounded-lg"
+                  style={{ backgroundColor: '#fef9f0', border: '1px solid #d4c5a9' }}
+                >
+                  {editing === book.id ? (
+                    <div className="flex gap-2 flex-1">
+                      <input
+                        type="text"
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        className="form-input flex-1"
+                        autoFocus
+                      />
+                      <button
+                        onClick={() => handleEdit(book.id, editName)}
+                        className="btn-primary btn-sm"
+                      >
+                        ✅
+                      </button>
+                      <button
+                        onClick={() => setEditing(null)}
+                        className="btn-secondary btn-sm"
+                      >
+                        ❌
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">📖</span>
+                        <span className="font-bold" style={{ color: '#3d2817' }}>{book.name}</span>
+                      </div>
+                      <div className="flex gap-2">
                         <button
-                          onClick={() => handleEdit(book.id, editName)}
-                          className="btn-primary btn-sm"
-                        >
-                          ✅
-                        </button>
-                        <button
-                          onClick={() => setEditing(null)}
+                          onClick={() => {
+                            setEditing(book.id)
+                            setEditName(book.name)
+                          }}
                           className="btn-secondary btn-sm"
                         >
-                          ❌
+                          ✏️ ערוך
+                        </button>
+                        <button
+                          onClick={() => handleDelete(book.id)}
+                          className="btn-primary btn-danger btn-sm"
+                        >
+                          🗑️ מחק
                         </button>
                       </div>
-                    ) : (
-                      <>
-                        <div className="flex items-center gap-3">
-                          <span className="text-2xl">📖</span>
-                          <span className="font-bold text-[#3d2817]">{book.name}</span>
-                        </div>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => {
-                              setEditing(book.id)
-                              setEditName(book.name)
-                            }}
-                            className="btn-secondary btn-sm"
-                          >
-                            ✏️ ערוך
-                          </button>
-                          <button
-                            onClick={() => handleDelete(book.id)}
-                            className="btn-primary btn-danger btn-sm"
-                          >
-                            🗑️ מחק
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                ))
-              )}
+                    </>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
 
           {message && (
-            <div className="p-4 rounded-lg text-center font-bold bg-green-100 text-green-800 border border-green-300">
+            <div
+              className="p-4 rounded-lg text-center font-bold"
+              style={{ backgroundColor: '#dcfce7', color: '#166534' }}
+            >
               {message}
             </div>
           )}

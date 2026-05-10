@@ -1,22 +1,24 @@
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import { useState, useEffect } from 'react'
-import { useAuthStore } from '@/lib/store'
 
 export default function Home() {
   const router = useRouter()
-  const { user, setUser } = useAuthStore()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    if (user) {
+    setMounted(true)
+    // בדוק אם משתמש כבר מחובר
+    const savedUser = localStorage.getItem('user')
+    if (savedUser) {
       router.push('/dashboard')
     }
-  }, [user, router])
+  }, [router])
 
-  const handleLogin = async (role: 'editor' | 'admin' | 'designer') => {
+  const handleLogin = (role: 'editor' | 'admin' | 'designer') => {
     if (!email || !password) {
       alert('נא למלא אימייל וסיסמא')
       return
@@ -31,14 +33,20 @@ export default function Home() {
         role,
       }
 
-      setUser(userData)
       localStorage.setItem('user', JSON.stringify(userData))
       router.push('/dashboard')
     } catch (error) {
       alert('שגיאה בכניסה')
-    } finally {
       setLoading(false)
     }
+  }
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#f5f0e8]">
+        <div className="text-2xl text-[#3d2817]">⏳ טוען...</div>
+      </div>
+    )
   }
 
   return (
@@ -64,10 +72,10 @@ export default function Home() {
           >
             <h1 className="text-5xl font-bold mb-4">🌟</h1>
             <h2 className="text-4xl font-bold mb-4">אור החסידות</h2>
-            <p className="text-lg text-[#e8d5b7] mb-8">
+            <p className="text-lg mb-8" style={{ color: '#e8d5b7' }}>
               מערכת ניהול תוכן מקצועית
             </p>
-            <div className="space-y-3 text-[#e8d5b7]">
+            <div className="space-y-3" style={{ color: '#e8d5b7' }}>
               <div className="flex items-center gap-3">
                 <span className="text-2xl">✍️</span>
                 <span>יצירת תוכן יומי</span>
@@ -89,10 +97,12 @@ export default function Home() {
 
           {/* Right side - Login */}
           <div className="p-12 flex flex-col justify-center">
-            <h3 className="text-2xl font-bold mb-2 text-[#3d2817]">
+            <h3 className="text-2xl font-bold mb-2" style={{ color: '#3d2817' }}>
               ברוכים הבאים
             </h3>
-            <p className="text-[#6b5535] mb-8">בחר את התפקיד שלך והתחבר</p>
+            <p className="mb-8" style={{ color: '#6b5535' }}>
+              בחר את התפקיד שלך והתחבר
+            </p>
 
             <div className="space-y-4 mb-6">
               <div>
@@ -145,7 +155,7 @@ export default function Home() {
               </button>
             </div>
 
-            <p className="text-xs text-[#a89070] text-center mt-6">
+            <p className="text-xs text-center mt-6" style={{ color: '#a89070' }}>
               💡 כניסה זמנית למערכת ההדגמה
             </p>
           </div>

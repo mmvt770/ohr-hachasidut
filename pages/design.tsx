@@ -1,8 +1,7 @@
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
-import { useAuthStore } from '@/lib/store'
-import Layout from '@/components/Layout'
+import Layout from '../components/Layout'
 
 interface DesignItem {
   id: string
@@ -12,49 +11,41 @@ interface DesignItem {
 }
 
 const MOCK_ITEMS: DesignItem[] = [
-  {
-    id: '1',
-    title: 'פתגם על אמונה',
-    text: 'אמונה היא כוח עצום',
-    category: 'ביטחון בה״א',
-  },
-  {
-    id: '2',
-    title: 'דרכי החסידות',
-    text: 'בעבודת ה״ב צריך לשמור על סדר',
-    category: 'דרכי החסידות',
-  },
+  { id: '1', title: 'פתגם על אמונה', text: 'אמונה היא כוח עצום', category: 'ביטחון בה״א' },
+  { id: '2', title: 'דרכי החסידות', text: 'בעבודת ה״ב צריך לשמור על סדר', category: 'דרכי החסידות' },
 ]
 
 export default function Design() {
   const router = useRouter()
-  const user = useAuthStore((state) => state.user)
-  const [items] = useState<DesignItem[]>(MOCK_ITEMS)
-  const [selected, setSelected] = useState<DesignItem | null>(items[0] || null)
+  const [user, setUser] = useState<any>(null)
+  const [mounted, setMounted] = useState(false)
+  const [selected, setSelected] = useState<DesignItem | null>(MOCK_ITEMS[0])
   const [designImage, setDesignImage] = useState<File | null>(null)
-  const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
 
   useEffect(() => {
-    if (!user || user.role !== 'designer') {
+    setMounted(true)
+    const savedUser = localStorage.getItem('user')
+    if (savedUser) {
+      const u = JSON.parse(savedUser)
+      if (u.role === 'designer' || u.role === 'admin') {
+        setUser(u)
+      } else {
+        router.push('/dashboard')
+      }
+    } else {
       router.push('/')
     }
-  }, [user, router])
+  }, [router])
 
-  const handleUpload = async () => {
-    if (!designImage || !selected) return
-    setLoading(true)
-    try {
-      console.log('Upload:', selected.id, designImage)
-      setMessage('✅ העיצוב נשמר בהצלחה!')
-      setDesignImage(null)
-      setTimeout(() => setMessage(''), 2000)
-    } finally {
-      setLoading(false)
-    }
+  const handleUpload = () => {
+    if (!designImage) return
+    setMessage('✅ העיצוב נשמר בהצלחה!')
+    setDesignImage(null)
+    setTimeout(() => setMessage(''), 2000)
   }
 
-  if (!user) return null
+  if (!mounted || !user) return null
 
   return (
     <>
@@ -64,43 +55,43 @@ export default function Design() {
 
       <Layout title="🎨 העלאת עיצובים">
         <div className="animate-fade-in grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left - List */}
           <div className="lg:col-span-1">
             <div className="card mb-4">
-              <h2 className="font-bold text-[#3d2817]">
-                מוכנים לעיצוב ({items.length})
+              <h2 className="font-bold" style={{ color: '#3d2817' }}>
+                מוכנים לעיצוב ({MOCK_ITEMS.length})
               </h2>
             </div>
             <div>
-              {items.map((item) => (
+              {MOCK_ITEMS.map((item) => (
                 <div
                   key={item.id}
                   onClick={() => setSelected(item)}
                   className={`list-row ${selected?.id === item.id ? 'active' : ''}`}
                 >
-                  <h3 className="font-bold text-[#3d2817]">{item.title}</h3>
-                  <span className="tag mt-2">{item.category}</span>
+                  <h3 className="font-bold" style={{ color: '#3d2817' }}>{item.title}</h3>
+                  <span className="tag mt-2 inline-block">{item.category}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Right - Upload */}
           {selected && (
             <div className="lg:col-span-2">
               <div className="card space-y-6">
                 <div>
-                  <h2 className="text-2xl font-bold text-[#3d2817] mb-3">
+                  <h2 className="text-2xl font-bold mb-3" style={{ color: '#3d2817' }}>
                     {selected.title}
                   </h2>
-                  <p className="text-[#6b5535] preserve-text">{selected.text}</p>
+                  <p className="preserve-text" style={{ color: '#6b5535' }}>{selected.text}</p>
                 </div>
-
                 <div>
-                  <h3 className="font-bold text-[#3d2817] mb-4">
+                  <h3 className="font-bold mb-4" style={{ color: '#3d2817' }}>
                     🎨 העלאת עיצוב סופי
                   </h3>
-                  <div className="border-2 border-dashed border-[#8b6f47] rounded-xl p-12 text-center bg-[#fef9f0]">
+                  <div
+                    className="rounded-xl p-12 text-center"
+                    style={{ border: '2px dashed #8b6f47', backgroundColor: '#fef9f0' }}
+                  >
                     <input
                       type="file"
                       accept="image/*"
@@ -112,16 +103,17 @@ export default function Design() {
                       {designImage ? (
                         <div>
                           <div className="text-5xl mb-3">✅</div>
-                          <p className="font-bold text-[#3d2817]">{designImage.name}</p>
-                          <p className="text-sm text-[#a89070] mt-2">לחץ לשינוי</p>
+                          <p className="font-bold" style={{ color: '#3d2817' }}>
+                            {designImage.name}
+                          </p>
                         </div>
                       ) : (
                         <div>
                           <div className="text-5xl mb-3">📤</div>
-                          <p className="font-bold text-lg text-[#3d2817]">
+                          <p className="font-bold text-lg" style={{ color: '#3d2817' }}>
                             לחץ או גרור תמונה
                           </p>
-                          <p className="text-sm text-[#a89070] mt-2">
+                          <p className="text-sm mt-2" style={{ color: '#a89070' }}>
                             PNG, JPG, GIF
                           </p>
                         </div>
@@ -129,14 +121,13 @@ export default function Design() {
                     </label>
                   </div>
                 </div>
-
-                <div className="flex gap-3 pt-4 border-t border-[#d4c5a9]">
+                <div className="flex gap-3 pt-4" style={{ borderTop: '1px solid #d4c5a9' }}>
                   <button
                     onClick={handleUpload}
-                    disabled={!designImage || loading}
+                    disabled={!designImage}
                     className="btn-primary flex-1"
                   >
-                    {loading ? '⏳' : '✅'} שמור עיצוב
+                    ✅ שמור עיצוב
                   </button>
                   <button
                     onClick={() => router.push('/dashboard')}
@@ -145,9 +136,11 @@ export default function Design() {
                     ביטול
                   </button>
                 </div>
-
                 {message && (
-                  <div className="p-4 rounded-lg text-center font-bold bg-green-100 text-green-800 border border-green-300">
+                  <div
+                    className="p-4 rounded-lg text-center font-bold"
+                    style={{ backgroundColor: '#dcfce7', color: '#166534' }}
+                  >
                     {message}
                   </div>
                 )}

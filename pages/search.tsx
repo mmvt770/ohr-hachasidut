@@ -1,8 +1,7 @@
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
-import { useAuthStore } from '@/lib/store'
-import Layout from '@/components/Layout'
+import Layout from '../components/Layout'
 
 interface Item {
   id: string
@@ -31,7 +30,7 @@ const MOCK_ITEMS: Item[] = [
   {
     id: '2',
     title: 'דרכי החסידות היומיות',
-    text: 'בעבודת ה״ב צריך לשמור על סדר וקביעות. כל יום צריך להיות זהה לקודמו בעבודה הרוחנית.',
+    text: 'בעבודת ה״ב צריך לשמור על סדר וקביעות.',
     contentType: 'חינוך יומי',
     category: 'דרכי החסידות',
     status: 'בעיצוב',
@@ -42,7 +41,7 @@ const MOCK_ITEMS: Item[] = [
   {
     id: '3',
     title: 'עצה לחיזוק',
-    text: 'בעת קושי - יש לזכור שהקב״ה תמיד איתנו ולא לאבד תקווה.',
+    text: 'בעת קושי - יש לזכור שהקב״ה תמיד איתנו.',
     contentType: 'עידוד וחיזוק',
     category: 'ביטחון בה״א',
     status: 'פורסם',
@@ -52,51 +51,41 @@ const MOCK_ITEMS: Item[] = [
   },
 ]
 
-const CONTENT_TYPES = ['פתגמים', 'אגרות קודש', 'חינוך יומי', 'עידוד וחיזוק']
-const CATEGORIES = ['ביטחון בה״א', 'דרכי החסידות', 'נשים', 'כללי']
-const STATUSES = ['חדש', 'ממתין לאישור', 'מוכן לגרפיקה', 'בעיצוב', 'מוכן לפרסום', 'פורסם', 'נפסל']
-const BOOKS = ['תניא', 'אגרות קודש', 'ספר השיחות', 'מענות לשאלות']
-
 export default function Search() {
   const router = useRouter()
-  const user = useAuthStore((state) => state.user)
-  const [items] = useState<Item[]>(MOCK_ITEMS)
+  const [user, setUser] = useState<any>(null)
+  const [mounted, setMounted] = useState(false)
   const [searchText, setSearchText] = useState('')
   const [filterType, setFilterType] = useState('')
   const [filterCategory, setFilterCategory] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
-  const [filterBook, setFilterBook] = useState('')
-  const [filterFrom, setFilterFrom] = useState('')
-  const [filterTo, setFilterTo] = useState('')
   const [selectedItem, setSelectedItem] = useState<Item | null>(null)
   const [showFilters, setShowFilters] = useState(false)
 
   useEffect(() => {
-    if (!user || (user.role !== 'editor' && user.role !== 'admin')) {
+    setMounted(true)
+    const savedUser = localStorage.getItem('user')
+    if (savedUser) {
+      const u = JSON.parse(savedUser)
+      if (u.role === 'editor' || u.role === 'admin') {
+        setUser(u)
+      } else {
+        router.push('/dashboard')
+      }
+    } else {
       router.push('/')
     }
-  }, [user, router])
+  }, [router])
 
-  const filtered = items.filter((item) => {
+  const filtered = MOCK_ITEMS.filter((item) => {
     const matchText = item.title.includes(searchText) || item.text.includes(searchText)
     const matchType = !filterType || item.contentType === filterType
     const matchCat = !filterCategory || item.category === filterCategory
     const matchStatus = !filterStatus || item.status === filterStatus
-    const matchBook = !filterBook || item.sourceBook === filterBook
-    const matchFrom = !filterFrom || item.publishDate >= filterFrom
-    const matchTo = !filterTo || item.publishDate <= filterTo
-    return matchText && matchType && matchCat && matchStatus && matchBook && matchFrom && matchTo
+    return matchText && matchType && matchCat && matchStatus
   })
 
-  const handleDuplicate = (item: Item) => {
-    if (confirm(`לשכפל "${item.title}" ולעבור ליצירת תוכן?`)) {
-      // בפרוייקט אמיתי - שמירה ב-state והעברה ל-/create
-      sessionStorage.setItem('duplicateItem', JSON.stringify(item))
-      router.push('/create')
-    }
-  }
-
-  if (!user) return null
+  if (!mounted || !user) return null
 
   return (
     <>
@@ -106,7 +95,6 @@ export default function Search() {
 
       <Layout title="🔍 חיפוש פתגמים">
         <div className="animate-fade-in space-y-4">
-          {/* Search Bar */}
           <div className="card">
             <div className="flex gap-3 items-center">
               <input
@@ -120,20 +108,24 @@ export default function Search() {
                 onClick={() => setShowFilters(!showFilters)}
                 className="btn-secondary whitespace-nowrap"
               >
-                {showFilters ? '🔼 הסתר' : '🔽 סינון מתקדם'}
+                {showFilters ? '🔼 הסתר' : '🔽 סינון'}
               </button>
             </div>
 
-            {/* Advanced Filters */}
             {showFilters && (
-              <div className="mt-4 pt-4 border-t border-[#d4c5a9] grid grid-cols-2 md:grid-cols-3 gap-3 animate-fade-in">
+              <div
+                className="mt-4 pt-4 grid grid-cols-2 md:grid-cols-3 gap-3"
+                style={{ borderTop: '1px solid #d4c5a9' }}
+              >
                 <select
                   value={filterType}
                   onChange={(e) => setFilterType(e.target.value)}
                   className="form-input"
                 >
                   <option value="">כל הסוגים</option>
-                  {CONTENT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                  <option value="פתגמים">פתגמים</option>
+                  <option value="חינוך יומי">חינוך יומי</option>
+                  <option value="עידוד וחיזוק">עידוד וחיזוק</option>
                 </select>
                 <select
                   value={filterCategory}
@@ -141,7 +133,8 @@ export default function Search() {
                   className="form-input"
                 >
                   <option value="">כל הקטגוריות</option>
-                  {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                  <option value="ביטחון בה״א">ביטחון בה״א</option>
+                  <option value="דרכי החסידות">דרכי החסידות</option>
                 </select>
                 <select
                   value={filterStatus}
@@ -149,47 +142,23 @@ export default function Search() {
                   className="form-input"
                 >
                   <option value="">כל הסטטוסים</option>
-                  {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                  <option value="מוכן לפרסום">מוכן לפרסום</option>
+                  <option value="בעיצוב">בעיצוב</option>
+                  <option value="פורסם">פורסם</option>
                 </select>
-                <select
-                  value={filterBook}
-                  onChange={(e) => setFilterBook(e.target.value)}
-                  className="form-input"
-                >
-                  <option value="">כל הספרים</option>
-                  {BOOKS.map((b) => <option key={b} value={b}>{b}</option>)}
-                </select>
-                <input
-                  type="date"
-                  value={filterFrom}
-                  onChange={(e) => setFilterFrom(e.target.value)}
-                  className="form-input"
-                  placeholder="מתאריך"
-                />
-                <input
-                  type="date"
-                  value={filterTo}
-                  onChange={(e) => setFilterTo(e.target.value)}
-                  className="form-input"
-                  placeholder="עד תאריך"
-                />
               </div>
             )}
           </div>
 
-          {/* Results */}
-          <div className="flex justify-between items-center">
-            <p className="text-[#6b5535] font-bold">
-              נמצאו {filtered.length} פתגמים
-            </p>
-          </div>
+          <p className="font-bold" style={{ color: '#6b5535' }}>
+            נמצאו {filtered.length} פתגמים
+          </p>
 
-          {/* List */}
           <div>
             {filtered.length === 0 ? (
               <div className="card text-center py-12">
                 <div className="text-6xl mb-4">🔍</div>
-                <p className="text-[#6b5535] text-lg">לא נמצאו תוצאות</p>
+                <p className="text-lg" style={{ color: '#6b5535' }}>לא נמצאו תוצאות</p>
               </div>
             ) : (
               filtered.map((item) => (
@@ -200,8 +169,19 @@ export default function Search() {
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
-                      <h3 className="text-lg font-bold text-[#3d2817] mb-2">{item.title}</h3>
-                      <p className="text-[#6b5535] preserve-text mb-3" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                      <h3 className="text-lg font-bold mb-2" style={{ color: '#3d2817' }}>
+                        {item.title}
+                      </h3>
+                      <p
+                        className="preserve-text mb-3"
+                        style={{
+                          color: '#6b5535',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                        }}
+                      >
                         {item.text}
                       </p>
                       <div className="flex gap-2 flex-wrap items-center">
@@ -210,43 +190,33 @@ export default function Search() {
                         </span>
                         <span className="tag">{item.contentType}</span>
                         <span className="tag">{item.category}</span>
-                        <span className="text-xs text-[#a89070]">📅 {item.publishDate}</span>
-                        <span className="text-xs text-[#a89070]">📖 {item.sourceBook}</span>
-                        <span className="text-xs text-[#a89070]">✍️ {item.editorName}</span>
+                        <span className="text-xs" style={{ color: '#a89070' }}>
+                          📅 {item.publishDate}
+                        </span>
                       </div>
                     </div>
-
                     <div className="flex gap-2 mr-4">
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
-                          handleDuplicate(item)
+                          alert('שכפול: ' + item.title)
                         }}
                         className="btn-secondary btn-sm"
-                        title="שכפל פריט"
                       >
                         📋 שכפל
                       </button>
-                      {user.role === 'admin' && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            alert('עריכה של: ' + item.title)
-                          }}
-                          className="btn-secondary btn-sm"
-                          title="ערוך"
-                        >
-                          ✏️ ערוך
-                        </button>
-                      )}
                     </div>
                   </div>
 
-                  {/* Expanded view */}
                   {selectedItem?.id === item.id && (
-                    <div className="mt-4 pt-4 border-t border-[#d4c5a9] animate-fade-in">
-                      <h4 className="font-bold text-[#3d2817] mb-2">📜 הטקסט המלא:</h4>
-                      <p className="preserve-text whitespace-pre-line bg-[#fef9f0] p-4 rounded-lg">
+                    <div className="mt-4 pt-4" style={{ borderTop: '1px solid #d4c5a9' }}>
+                      <h4 className="font-bold mb-2" style={{ color: '#3d2817' }}>
+                        📜 הטקסט המלא:
+                      </h4>
+                      <p
+                        className="preserve-text whitespace-pre-line p-4 rounded-lg"
+                        style={{ backgroundColor: '#fef9f0' }}
+                      >
                         {item.text}
                       </p>
                     </div>
