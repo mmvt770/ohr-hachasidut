@@ -1,27 +1,24 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 
-const AIRTABLE_API_URL = 'https://api.airtable.com/v0'
-const TABLE_NAME = 'תוכן' // שם הטבלה - יותאם בהתאם
-
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
   const baseId = process.env.AIRTABLE_BASE_ID
   const apiKey = process.env.AIRTABLE_API_KEY
+  const tableName = (req.query.table as string) || 'תוכן'
 
   if (!baseId || !apiKey) {
     return res.status(500).json({
       success: false,
-      error: 'Airtable credentials not configured. Add AIRTABLE_BASE_ID and AIRTABLE_API_KEY to environment variables.',
+      error: 'Airtable credentials not configured',
     })
   }
 
-  const url = `${AIRTABLE_API_URL}/${baseId}/${encodeURIComponent(TABLE_NAME)}`
+  const url = `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(tableName)}`
 
   try {
     if (req.method === 'GET') {
-      // קבלת רשומות
       const params = new URLSearchParams()
       
       if (req.query.view) params.append('view', req.query.view as string)
@@ -30,12 +27,12 @@ export default async function handler(
       }
       if (req.query.maxRecords) {
         params.append('maxRecords', req.query.maxRecords as string)
+      } else {
+        params.append('maxRecords', '100')
       }
 
       const response = await fetch(`${url}?${params.toString()}`, {
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-        },
+        headers: { Authorization: `Bearer ${apiKey}` },
       })
 
       if (!response.ok) {
@@ -47,11 +44,10 @@ export default async function handler(
       }
 
       const data = await response.json()
-      return res.status(200).json({ success: true, data: data.records })
+      return res.status(200).json({ success: true, records: data.records })
     }
 
     if (req.method === 'POST') {
-      // יצירת רשומה חדשה
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -70,11 +66,10 @@ export default async function handler(
       }
 
       const data = await response.json()
-      return res.status(200).json({ success: true, data })
+      return res.status(200).json({ success: true, record: data })
     }
 
     if (req.method === 'PATCH') {
-      // עדכון רשומה
       const { id, ...fields } = req.body
       
       if (!id) {
@@ -99,11 +94,10 @@ export default async function handler(
       }
 
       const data = await response.json()
-      return res.status(200).json({ success: true, data })
+      return res.status(200).json({ success: true, record: data })
     }
 
     if (req.method === 'DELETE') {
-      // מחיקת רשומה
       const { id } = req.query
 
       if (!id) {
@@ -112,9 +106,7 @@ export default async function handler(
 
       const response = await fetch(`${url}/${id}`, {
         method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-        },
+        headers: { Authorization: `Bearer ${apiKey}` },
       })
 
       if (!response.ok) {
@@ -125,7 +117,7 @@ export default async function handler(
         })
       }
 
-      return res.status(200).json({ success: true, message: 'Record deleted' })
+      return res.status(200).json({ success: true })
     }
 
     return res.status(405).json({ success: false, error: 'Method not allowed' })

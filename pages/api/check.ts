@@ -13,6 +13,7 @@ export default async function handler(
       error: 'Airtable credentials not configured',
       hasBaseId: !!baseId,
       hasApiKey: !!apiKey,
+      message: 'Add AIRTABLE_BASE_ID and AIRTABLE_API_KEY to Vercel Environment Variables',
     })
   }
 
@@ -31,12 +32,34 @@ export default async function handler(
       return res.status(response.status).json({
         success: false,
         error: `Airtable error: ${error}`,
+        statusCode: response.status,
       })
     }
 
     const data = await response.json()
-    return res.status(200).json({ success: true, data })
+    
+    // עיבוד התוצאה לתצוגה נוחה
+    const tables = data.tables.map((table: any) => ({
+      id: table.id,
+      name: table.name,
+      primaryFieldId: table.primaryFieldId,
+      fields: table.fields.map((field: any) => ({
+        id: field.id,
+        name: field.name,
+        type: field.type,
+        options: field.options,
+      })),
+      views: table.views?.map((v: any) => ({ id: v.id, name: v.name, type: v.type })),
+    }))
+
+    return res.status(200).json({
+      success: true,
+      baseId,
+      tablesCount: tables.length,
+      tables,
+    })
   } catch (error: any) {
+    console.error('Airtable error:', error)
     return res.status(500).json({
       success: false,
       error: error.message || 'Unknown error',
