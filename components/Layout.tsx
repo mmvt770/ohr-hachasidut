@@ -37,15 +37,23 @@ export default function Layout({ children, title }: LayoutProps) {
 
   useEffect(() => {
     setMounted(true)
-    const savedUser = localStorage.getItem('user')
-    if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser))
-      } catch {
-        localStorage.removeItem('user')
+    try {
+      const savedUser = localStorage.getItem('user')
+      if (savedUser) {
+        const parsedUser = JSON.parse(savedUser)
+        // וודא שיש את כל השדות הנדרשים
+        if (parsedUser && parsedUser.name && parsedUser.role) {
+          setUser(parsedUser)
+        } else {
+          localStorage.removeItem('user')
+          router.push('/')
+        }
+      } else {
         router.push('/')
       }
-    } else {
+    } catch (error) {
+      console.error('Error loading user:', error)
+      localStorage.removeItem('user')
       router.push('/')
     }
   }, [router])
@@ -56,15 +64,42 @@ export default function Layout({ children, title }: LayoutProps) {
     router.push('/')
   }
 
+  // לפני שה-component mounted - מציג loading
   if (!mounted) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f5f0e8]">
-        <div className="text-2xl text-[#3d2817]">⏳ טוען...</div>
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: '#f5f0e8',
+        }}
+      >
+        <div style={{ fontSize: '1.5rem', color: '#3d2817' }}>⏳ טוען...</div>
       </div>
     )
   }
 
-  if (!user) return null
+  // אם אין user - מציג טוען (התנתבות תקרה ב-useEffect)
+  if (!user) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: '#f5f0e8',
+        }}
+      >
+        <div style={{ fontSize: '1.5rem', color: '#3d2817' }}>⏳ מעביר לכניסה...</div>
+      </div>
+    )
+  }
+
+  // וודא ש-name קיים
+  const userInitial = user.name && user.name.length > 0 ? user.name.charAt(0).toUpperCase() : '?'
 
   const allowedItems = NAV_ITEMS.filter((item) => item.roles.includes(user.role))
 
@@ -98,7 +133,7 @@ export default function Layout({ children, title }: LayoutProps) {
               className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold"
               style={{ backgroundColor: '#8b6f47' }}
             >
-              {user.name.charAt(0).toUpperCase()}
+              {userInitial}
             </div>
             <div className="flex-1">
               <p className="font-bold text-sm">{user.name}</p>
@@ -136,7 +171,7 @@ export default function Layout({ children, title }: LayoutProps) {
         <div className="p-4" style={{ borderTop: '1px solid #5a3a22' }}>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition hover:bg-red-900"
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition"
             style={{ color: '#e8d5b7' }}
           >
             <span className="text-xl">🚪</span>
