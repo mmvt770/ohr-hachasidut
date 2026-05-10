@@ -1,28 +1,26 @@
 import { format, parse } from 'date-fns'
-import { heIL } from 'date-fns/locale'
 
-// תאריכים עברים
-export function formatHebrewDate(date: string | Date): string {
+// תאריכים
+export function formatDate(date: string | Date): string {
   try {
     const d = typeof date === 'string' ? new Date(date) : date
-    return format(d, 'dd.MM.yyyy', { locale: heIL })
+    return format(d, 'dd.MM.yyyy')
   } catch {
     return ''
   }
 }
 
-export function formatHebrewDateFull(date: string | Date): string {
+export function formatDateFull(date: string | Date): string {
   try {
     const d = typeof date === 'string' ? new Date(date) : date
-    return format(d, 'EEEE, d בMMMM yyyy', { locale: heIL })
+    return format(d, 'dd/MM/yyyy')
   } catch {
     return ''
   }
 }
 
-export function parseHebrewDate(dateStr: string): Date | null {
+export function parseDate(dateStr: string): Date | null {
   try {
-    // Parse format: dd.MM.yyyy
     return parse(dateStr, 'dd.MM.yyyy', new Date())
   } catch {
     return null
@@ -50,7 +48,6 @@ export const STATUS_COLORS: Record<string, string> = {
 }
 
 export function getStatusBadgeClass(status: string): string {
-  const color = STATUS_COLORS[status] || 'gray'
   return `status-${status.replace(/\s+/g, '-').toLowerCase()}`
 }
 
@@ -97,9 +94,9 @@ export function hasBoldFormatting(text: string): boolean {
 export function calculateSimilarity(str1: string, str2: string): number {
   const longer = str1.length > str2.length ? str1 : str2
   const shorter = str1.length > str2.length ? str2 : str1
-  
+
   if (longer.length === 0) return 1.0
-  
+
   const editDistance = getEditDistance(longer, shorter)
   return (longer.length - editDistance) / longer.length
 }
@@ -127,7 +124,7 @@ function getEditDistance(s1: string, s2: string): number {
 
 export function findDuplicates(items: any[], threshold: number = 0.7): any[] {
   const duplicates: any[] = []
-  
+
   for (let i = 0; i < items.length; i++) {
     for (let j = i + 1; j < items.length; j++) {
       const similarity = calculateSimilarity(items[i].title, items[j].title)
@@ -140,6 +137,6 @@ export function findDuplicates(items: any[], threshold: number = 0.7): any[] {
       }
     }
   }
-  
+
   return duplicates
 }
